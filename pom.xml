@@ -1,130 +1,130 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.jvnet.hudson.plugins</groupId>
-    <artifactId>plugin</artifactId>
-    <version>1.358</version>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jvnet.hudson.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.358</version>
+    </parent>
 
-  <artifactId>git</artifactId>
-  <version>1.1.7-SNAPSHOT</version>
-  <packaging>hpi</packaging>
-  <name>Jenkins GIT plugin</name>
-  <description>Integrates Jenkins with GIT SCM</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin</url>
+    <artifactId>git</artifactId>
+    <version>1.1.7-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+    <name>Hudson GIT plugin</name>
+    <description>Integrates Hudson with GIT SCM</description>
+    <url>http://wiki.hudson-ci.org/display/HUDSON/Git+Plugin</url>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>1.0-beta-1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.0-beta-1</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <goals>deploy</goals>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-  
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
-  <repositories>
-    <repository>
-      <id>jgit-snapshot-repository</id>
-      <url>http://egit.googlecode.com/svn/maven/snapshot-repository</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-    
-    <repository>
-      <id>jgit-release-repository</id>
-      <url>http://egit.googlecode.com/svn/maven</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-    
-    <repository>
-      <id>guice-maven</id>
-      <name>guice maven</name>
-      <url>http://guice-maven.googlecode.com/svn/trunk</url>
-    </repository>
-  </repositories>
+    <repositories>
+        <repository>
+            <id>jgit-snapshot-repository</id>
+            <url>http://egit.googlecode.com/svn/maven/snapshot-repository</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.spearce</groupId>
-      <artifactId>jgit</artifactId>
-      <!-- SEE README! -->
-      <version>0.4-47e4af3</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jgit</groupId>
-      <artifactId>org.eclipse.jgit</artifactId>
-      <version>0.5.1.51-g96b2e76</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-      <version>1.5.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.8.5</version>
-      <scope>test</scope>
-    </dependency>
+        <repository>
+            <id>jgit-release-repository</id>
+            <url>http://egit.googlecode.com/svn/maven</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
 
-    <dependency><!-- we contribute AbstractBuildParameters for Git if it's available -->
-      <groupId>org.jvnet.hudson.plugins</groupId>
-      <artifactId>parameterized-trigger</artifactId>
-      <version>2.4</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>token-macro</artifactId>
-      <version>1.0</version>
-      <optional>true</optional>
-    </dependency>
-  </dependencies>
+        <repository>
+            <id>guice-maven</id>
+            <name>guice maven</name>
+            <url>http://guice-maven.googlecode.com/svn/trunk</url>
+        </repository>
+    </repositories>
 
-  <distributionManagement>
-    <repository>
-      <id>maven.jenkins-ci.org</id>
-      <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
-    </repository>
-  </distributionManagement>
-  
-  <scm>
-    <connection>scm:git:git://github.com/jenkinsci/git-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/git-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/git-plugin</url>
-  </scm>
+    <dependencies>
+        <dependency>
+            <groupId>org.spearce</groupId>
+            <artifactId>jgit</artifactId>
+            <!-- SEE README! -->
+            <version>0.4-47e4af3</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>0.5.1.51-g96b2e76</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.8.5</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency><!-- we contribute AbstractBuildParameters for Git if it's available -->
+            <groupId>org.jvnet.hudson.plugins</groupId>
+            <artifactId>parameterized-trigger</artifactId>
+            <version>2.4</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>token-macro</artifactId>
+            <version>1.0</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <!-- distributionManagement>
+        <repository>
+            <id></id>
+            <url></url>
+        </repository>
+    </distributionManagement -->
+
+    <scm>
+        <connection>scm:git:git://github.com/hudson/Hudson-GIT-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:hudson/Hudson-GIT-plugin.git</developerConnection>
+        <url>http://github.com/hudson/Hudson-GIT-plugin</url>
+    </scm>
 
 </project>

@@ -1,21 +1,33 @@
 package hudson.plugins.git;
 
-import hudson.*;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
 import hudson.FilePath.FileCallable;
+import hudson.Launcher;
+import hudson.Util;
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixRun;
-
-import hudson.model.*;
-
-import static hudson.Util.fixEmptyAndTrim;
-
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Action;
+import hudson.model.BuildListener;
+import hudson.model.Hudson;
+import hudson.model.Label;
+import hudson.model.Node;
+import hudson.model.ParametersAction;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.plugins.git.browser.GitRepositoryBrowser;
 import hudson.plugins.git.browser.GitWeb;
 import hudson.plugins.git.opt.PreBuildMergeOptions;
-
-import hudson.plugins.git.util.*;
 import hudson.plugins.git.util.Build;
-
+import hudson.plugins.git.util.BuildChooser;
+import hudson.plugins.git.util.BuildChooserDescriptor;
+import hudson.plugins.git.util.BuildData;
+import hudson.plugins.git.util.DefaultBuildChooser;
+import hudson.plugins.git.util.GitUtils;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
@@ -23,22 +35,24 @@ import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import hudson.util.FormValidation;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
 import javax.servlet.ServletException;
-
 import net.sf.json.JSONObject;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -46,6 +60,8 @@ import org.spearce.jgit.lib.ObjectId;
 import org.spearce.jgit.lib.RepositoryConfig;
 import org.spearce.jgit.transport.RefSpec;
 import org.spearce.jgit.transport.RemoteConfig;
+
+import static hudson.Util.fixEmptyAndTrim;
 
 
 /**
@@ -1135,8 +1151,9 @@ public class GitSCM extends SCM implements Serializable {
         if(branch != null){
             env.put(GIT_BRANCH, branch);
         }
+        //TODO fix the broken test
         BuildData bd = fixNull(getBuildData(build, false));
-        if (bd != null) {
+        if (bd != null && bd.getLastBuiltRevision() != null) {
             String commit = bd.getLastBuiltRevision().getSha1String();
             if (commit != null) {
                 env.put(GIT_COMMIT, commit);
