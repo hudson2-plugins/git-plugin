@@ -152,7 +152,7 @@ public class SubmoduleCombinator {
         git.branch(name);
         git.checkout(name);
    
-        String commit = "Jenkins generated combination of:\n";
+        String commit = "Hudson generated combination of:\n";
     
         for (IndexEntry submodule : settings.keySet()) {
             Revision branch = settings.get(submodule);
