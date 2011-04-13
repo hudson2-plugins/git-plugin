@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jvnet.hudson.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.358</version>
+        <version>1.388</version>
     </parent>
 
     <artifactId>git</artifactId>
@@ -104,12 +104,6 @@
             <groupId>org.jvnet.hudson.plugins</groupId>
             <artifactId>parameterized-trigger</artifactId>
             <version>2.4</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>token-macro</artifactId>
-            <version>1.0</version>
             <optional>true</optional>
         </dependency>
     </dependencies>
