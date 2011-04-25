@@ -3,7 +3,6 @@ package hudson.plugins.git;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.git.util.GitUtils;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,31 +13,30 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import org.spearce.jgit.lib.ObjectId;
 
 /**
  * A common usecase for git submodules is to have child submodules, and a parent 'configuration' project that ties the
  * correct versions together. It is useful to be able to speculatively compile all combinations of submodules, so that
  * you can _know_ if a particular combination is no longer compatible.
- * 
+ *
  * @author nigelmagnay
  */
 public class SubmoduleCombinator {
-    IGitAPI      git;
-    File         workspace;
+    IGitAPI git;
+    File workspace;
     TaskListener listener;
 
-    long         tid = new Date().getTime();
-    long         idx = 1;
-  
+    long tid = new Date().getTime();
+    long idx = 1;
+
     Collection<SubmoduleConfig> submoduleConfig;
-  
+
     public SubmoduleCombinator(IGitAPI git, TaskListener listener, File workspace,
                                Collection<SubmoduleConfig> cfg) {
         this.git = git;
         this.listener = listener;
-    
+
         this.workspace = workspace;
         this.submoduleConfig = cfg;
     }
@@ -49,19 +47,18 @@ public class SubmoduleCombinator {
         for (IndexEntry submodule : git.getSubmodules("HEAD")) {
             File subdir = new File(workspace, submodule.getFile());
             IGitAPI subGit = new GitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
-      
+
             GitUtils gu = new GitUtils(listener, subGit);
             Collection<Revision> items = gu.filterTipBranches(gu.getAllBranchRevisions());
-      
+
             filterRevisions(submodule.getFile(), items);
-      
+
             moduleBranches.put(submodule, items);
         }
 
         // Remove any uninteresting branches
-    
-    
-    
+
+
         for (IndexEntry entry : moduleBranches.keySet()) {
             listener.getLogger().print("Submodule " + entry.getFile() + " branches");
             for (Revision br : moduleBranches.get(entry)) {
@@ -70,7 +67,7 @@ public class SubmoduleCombinator {
             }
             listener.getLogger().print("\n");
         }
-    
+
         // Make all the possible combinations
         List<Map<IndexEntry, Revision>> combinations = createCombinations(moduleBranches);
 
@@ -96,14 +93,14 @@ public class SubmoduleCombinator {
 
             }
         }
-    
+
         listener.getLogger().println("There are " + combinations.size() + " configurations that could be generated.");
-  
+
         ObjectId headSha1 = git.revParse("HEAD");
 
-    
+
         // Make up the combinations
-    
+
         for (Map<IndexEntry, Revision> combination : combinations) {
             // By default, use the head sha1
             ObjectId sha1 = headSha1;
@@ -118,22 +115,28 @@ public class SubmoduleCombinator {
                     sha1 = sha;
                 }
 
-                if (min == 1) break; // look no further
+                if (min == 1) {
+                    break; // look no further
+                }
             }
-      
+
             git.checkout(sha1.name());
             makeCombination(combination);
         }
-    
+
     }
 
     private Collection<Revision> filterRevisions(String name, Collection<Revision> items) {
         SubmoduleConfig config = getSubmoduleConfig(name);
-        if (config == null) return items;
+        if (config == null) {
+            return items;
+        }
 
         for (Iterator<Revision> it = items.iterator(); it.hasNext();) {
             Revision r = it.next();
-            if (!config.revisionMatchesInterest(r)) it.remove();
+            if (!config.revisionMatchesInterest(r)) {
+                it.remove();
+            }
         }
 
         return items;
@@ -141,51 +144,51 @@ public class SubmoduleCombinator {
 
     private SubmoduleConfig getSubmoduleConfig(String name) {
         for (SubmoduleConfig config : this.submoduleConfig) {
-            if (config.getSubmoduleName().equals(name)) return config;
+            if (config.getSubmoduleName().equals(name)) {
+                return config;
+            }
         }
         return null;
     }
 
     protected void makeCombination(Map<IndexEntry, Revision> settings) {
         // Assume we are checked out
-        String name = "combine-" + tid + "-" + (idx++); 
+        String name = "combine-" + tid + "-" + (idx++);
         git.branch(name);
         git.checkout(name);
-   
+
         String commit = "Hudson generated combination of:\n";
-    
+
         for (IndexEntry submodule : settings.keySet()) {
             Revision branch = settings.get(submodule);
             commit += "  " + submodule.getFile() + " " + branch.toString() + "\n";
         }
-    
+
         listener.getLogger().print(commit);
-    
-    
+
+
         for (IndexEntry submodule : settings.keySet()) {
             Revision branch = settings.get(submodule);
             File subdir = new File(workspace, submodule.getFile());
             IGitAPI subGit = new GitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
-      
+
             subGit.checkout(branch.sha1.name());
             git.add(submodule.file);
-      
+
         }
-    
+
         try {
             File f = File.createTempFile("gitcommit", ".txt");
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(f);
                 fos.write(commit.getBytes());
-            }
-            finally {
+            } finally {
                 fos.close();
             }
             git.commit(f);
             f.delete();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -194,17 +197,25 @@ public class SubmoduleCombinator {
 
     public int difference(Map<IndexEntry, Revision> item, List<IndexEntry> entries) {
         int difference = 0;
-        if (entries.size() != item.keySet().size()) return -1;
+        if (entries.size() != item.keySet().size()) {
+            return -1;
+        }
 
         for (IndexEntry entry : entries) {
             Revision b = null;
             for (IndexEntry e : item.keySet()) {
-                if (e.getFile().equals(entry.getFile())) b = item.get(e);
+                if (e.getFile().equals(entry.getFile())) {
+                    b = item.get(e);
+                }
             }
 
-            if (b == null) return -1;
+            if (b == null) {
+                return -1;
+            }
 
-            if (!entry.object.equals(b.getSha1())) difference++;
+            if (!entry.object.equals(b.getSha1())) {
+                difference++;
+            }
 
         }
         return difference;
@@ -215,8 +226,10 @@ public class SubmoduleCombinator {
     }
 
     public List<Map<IndexEntry, Revision>> createCombinations(Map<IndexEntry, Collection<Revision>> moduleBranches) {
-    
-        if (moduleBranches.keySet().size() == 0) return new ArrayList<Map<IndexEntry, Revision>>();
+
+        if (moduleBranches.keySet().size() == 0) {
+            return new ArrayList<Map<IndexEntry, Revision>>();
+        }
 
         // Get an entry:
         List<Map<IndexEntry, Revision>> thisLevel = new ArrayList<Map<IndexEntry, Revision>>();
@@ -231,20 +244,22 @@ public class SubmoduleCombinator {
         }
 
         List<Map<IndexEntry, Revision>> children = createCombinations(moduleBranches);
-        if (children.size() == 0) return thisLevel;
-    
+        if (children.size() == 0) {
+            return thisLevel;
+        }
+
         // Merge the two together
         List<Map<IndexEntry, Revision>> result = new ArrayList<Map<IndexEntry, Revision>>();
 
         for (Map<IndexEntry, Revision> thisLevelEntry : thisLevel) {
-      
+
             for (Map<IndexEntry, Revision> childLevelEntry : children) {
                 HashMap<IndexEntry, Revision> r = new HashMap<IndexEntry, Revision>();
                 r.putAll(thisLevelEntry);
                 r.putAll(childLevelEntry);
                 result.add(r);
             }
-      
+
         }
 
         return result;

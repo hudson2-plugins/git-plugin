@@ -9,28 +9,23 @@ import hudson.model.BuildListener;
 import hudson.model.Environment;
 import hudson.model.Hudson;
 import hudson.model.Node;
-import hudson.model.TaskListener;
-import hudson.slaves.NodeProperty;
 import hudson.model.StreamBuildListener;
+import hudson.model.TaskListener;
 import hudson.plugins.git.Branch;
 import hudson.plugins.git.GitException;
 import hudson.plugins.git.IGitAPI;
-import hudson.plugins.git.IndexEntry;
 import hudson.plugins.git.Revision;
-
-
+import hudson.slaves.NodeProperty;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-
 import org.spearce.jgit.lib.ObjectId;
 
 public class GitUtils {
@@ -45,6 +40,7 @@ public class GitUtils {
     /**
      * Return a list of "Revisions" - where a revision knows about all the branch names that refer to
      * a SHA1.
+     *
      * @return
      * @throws IOException
      * @throws GitException
@@ -65,15 +61,16 @@ public class GitUtils {
 
     /**
      * Return the revision containing the branch name.
+     *
      * @param branchName
      * @return
      * @throws IOException
      * @throws GitException
      */
     public Revision getRevisionContainingBranch(String branchName) throws GitException, IOException {
-        for(Revision revision : getAllBranchRevisions()) {
-            for(Branch b : revision.getBranches()) {
-                if(b.getName().equals(branchName)) {
+        for (Revision revision : getAllBranchRevisions()) {
+            for (Branch b : revision.getBranches()) {
+                if (b.getName().equals(branchName)) {
                     return revision;
                 }
             }
@@ -82,9 +79,10 @@ public class GitUtils {
     }
 
     public Revision getRevisionForSHA1(ObjectId sha1) throws GitException, IOException {
-        for(Revision revision : getAllBranchRevisions()) {
-            if(revision.getSha1().equals(sha1))
+        for (Revision revision : getAllBranchRevisions()) {
+            if (revision.getSha1().equals(sha1)) {
                 return revision;
+            }
         }
         return null;
     }
@@ -105,21 +103,23 @@ public class GitUtils {
         List<Revision> l = new ArrayList<Revision>(revisions);
 
         OUTER:
-        for (int i=0; i<l.size(); i++) {
-            for (int j=i+1; j<l.size(); j++) {
+        for (int i = 0; i < l.size(); i++) {
+            for (int j = i + 1; j < l.size(); j++) {
                 Revision ri = l.get(i);
                 Revision rj = l.get(j);
                 ObjectId commonAncestor = git.mergeBase(ri.getSha1(), rj.getSha1());
-                if (commonAncestor==null)   continue;
+                if (commonAncestor == null) {
+                    continue;
+                }
 
                 if (commonAncestor.equals(ri.getSha1())) {
-                    LOGGER.fine("filterTipBranches: "+rj+" subsumes "+ri);
+                    LOGGER.fine("filterTipBranches: " + rj + " subsumes " + ri);
                     l.remove(i);
                     i--;
                     continue OUTER;
                 }
                 if (commonAncestor.equals(rj.getSha1())) {
-                    LOGGER.fine("filterTipBranches: "+ri+" subsumes "+rj);
+                    LOGGER.fine("filterTipBranches: " + ri + " subsumes " + rj);
                     l.remove(j);
                     j--;
                 }
@@ -134,10 +134,10 @@ public class GitUtils {
      * Cribbed from various places.
      */
     public static EnvVars getPollEnvironment(AbstractProject p, FilePath ws, Launcher launcher, TaskListener listener)
-        throws IOException,InterruptedException {
+        throws IOException, InterruptedException {
         EnvVars env;
 
-        AbstractBuild b = (AbstractBuild)p.getLastBuild();
+        AbstractBuild b = (AbstractBuild) p.getLastBuild();
 
         if (b != null) {
             Node lastBuiltOn = b.getBuiltOn();
@@ -149,33 +149,35 @@ public class GitUtils {
             }
 
             String rootUrl = Hudson.getInstance().getRootUrl();
-            if(rootUrl!=null) {
+            if (rootUrl != null) {
                 env.put("HUDSON_URL", rootUrl);
-                env.put("BUILD_URL", rootUrl+b.getUrl());
-                env.put("JOB_URL", rootUrl+p.getUrl());
+                env.put("BUILD_URL", rootUrl + b.getUrl());
+                env.put("JOB_URL", rootUrl + p.getUrl());
             }
-            
-            if(!env.containsKey("HUDSON_HOME"))
-                env.put("HUDSON_HOME", Hudson.getInstance().getRootDir().getPath() );
 
-            if (ws != null)
+            if (!env.containsKey("HUDSON_HOME")) {
+                env.put("HUDSON_HOME", Hudson.getInstance().getRootDir().getPath());
+            }
+
+            if (ws != null) {
                 env.put("WORKSPACE", ws.getRemote());
-            
-            
-            p.getScm().buildEnvVars(b,env);
+            }
 
-            StreamBuildListener buildListener = new StreamBuildListener((OutputStream)listener.getLogger());
-            
-            for (NodeProperty nodeProperty: Hudson.getInstance().getGlobalNodeProperties()) {
-                Environment environment = nodeProperty.setUp(b, launcher, (BuildListener)buildListener);
+
+            p.getScm().buildEnvVars(b, env);
+
+            StreamBuildListener buildListener = new StreamBuildListener((OutputStream) listener.getLogger());
+
+            for (NodeProperty nodeProperty : Hudson.getInstance().getGlobalNodeProperties()) {
+                Environment environment = nodeProperty.setUp(b, launcher, (BuildListener) buildListener);
                 if (environment != null) {
                     environment.buildEnvVars(env);
                 }
             }
 
             if (lastBuiltOn != null) {
-                for (NodeProperty nodeProperty: lastBuiltOn.getNodeProperties()) {
-                    Environment environment = nodeProperty.setUp(b, launcher, (BuildListener)buildListener);
+                for (NodeProperty nodeProperty : lastBuiltOn.getNodeProperties()) {
+                    Environment environment = nodeProperty.setUp(b, launcher, (BuildListener) buildListener);
                     if (environment != null) {
                         environment.buildEnvVars(env);
                     }
@@ -194,16 +196,16 @@ public class GitUtils {
         String[] returnNames = new String[urls.length];
         Set<String> usedNames = new HashSet<String>();
 
-        for(int i=0; i<urls.length; i++) {
+        for (int i = 0; i < urls.length; i++) {
             String name = names[i];
 
-            if(name == null || name.trim().length() == 0) {
+            if (name == null || name.trim().length() == 0) {
                 name = "origin";
             }
 
             String baseName = name;
-            int j=1;
-            while(usedNames.contains(name)) {
+            int j = 1;
+            while (usedNames.contains(name)) {
                 name = baseName + (j++);
             }
 

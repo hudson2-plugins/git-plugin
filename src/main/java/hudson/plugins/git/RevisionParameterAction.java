@@ -24,11 +24,8 @@
 package hudson.plugins.git;
 
 import hudson.model.InvisibleAction;
-import org.spearce.jgit.lib.ObjectId;
-
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.logging.Logger;
+import org.spearce.jgit.lib.ObjectId;
 
 /**
  * Used as a build parameter to specify the revision to be built.
@@ -39,7 +36,7 @@ public class RevisionParameterAction extends InvisibleAction implements Serializ
     /**
      * SHA1, ref name, etc. that can be "git rev-parse"d into a specific commit.
      */
-	public final String commit;
+    public final String commit;
 
     public RevisionParameterAction(String commit) {
         this.commit = commit;
@@ -52,12 +49,11 @@ public class RevisionParameterAction extends InvisibleAction implements Serializ
         return revision;
     }
 
-	@Override
-	public String toString() {
-		return super.toString()+"[commit="+commit+"]";
-	}
+    @Override
+    public String toString() {
+        return super.toString() + "[commit=" + commit + "]";
+    }
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(RevisionParameterAction.class.getName());
 }
 

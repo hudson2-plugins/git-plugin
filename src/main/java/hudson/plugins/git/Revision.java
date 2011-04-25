@@ -2,7 +2,6 @@ package hudson.plugins.git;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.spearce.jgit.lib.ObjectId;
@@ -18,7 +17,7 @@ import org.spearce.jgit.lib.ObjectId;
 public class Revision implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = -7203898556389073882L;
 
-    ObjectId           sha1;
+    ObjectId sha1;
     Collection<Branch> branches;
 
     public Revision(ObjectId sha1) {
@@ -67,8 +66,9 @@ public class Revision implements java.io.Serializable, Cloneable {
         for (Branch br : branches) {
             s += br.getName() + ", ";
         }
-        if (s.endsWith(", "))
+        if (s.endsWith(", ")) {
             s = s.substring(0, s.length() - 2);
+        }
         s += ")";
 
         return s;
@@ -77,10 +77,9 @@ public class Revision implements java.io.Serializable, Cloneable {
     @Override
     public Revision clone() {
         Revision clone;
-	try {
+        try {
             clone = (Revision) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException e) {
             throw new RuntimeException("Error cloning Revision", e);
         }
         clone.branches = new ArrayList<Branch>(branches);

@@ -6,12 +6,10 @@ import hudson.plugins.git.GitChangeSet;
 import hudson.plugins.git.GitChangeSet.Path;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
-
 import hudson.scm.browsers.QueryBuilder;
 import java.io.IOException;
-import java.net.URL;
 import java.net.MalformedURLException;
-
+import java.net.URL;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -35,7 +33,7 @@ public class GitWeb extends GitRepositoryBrowser {
 
     @Override
     public URL getChangeSetLink(GitChangeSet changeSet) throws IOException {
-        return new URL(url, url.getPath()+param().add("a=commit").add("h=" + changeSet.getId()).toString());
+        return new URL(url, url.getPath() + param().add("a=commit").add("h=" + changeSet.getId()).toString());
     }
 
     private QueryBuilder param() {
@@ -60,12 +58,13 @@ public class GitWeb extends GitRepositoryBrowser {
         String spec = param().add("a=blobdiff").add("f=" + path.getPath()).add("fp=" + path.getPath())
             .add("h=" + path.getSrc()).add("hp=" + path.getDst())
             .add("hb=" + changeSet.getId()).add("hpb=" + changeSet.getParentCommit()).toString();
-        return new URL(url, url.getPath()+spec);
+        return new URL(url, url.getPath() + spec);
     }
 
     /**
      * Creates a link to the file.
      * http://[GitWeb URL]?a=blob;f=[path];h=[dst, or src for deleted files];hb=[commit]
+     *
      * @param path file
      * @return file link
      * @throws IOException
@@ -75,7 +74,7 @@ public class GitWeb extends GitRepositoryBrowser {
         String h = (path.getDst() != null) ? path.getDst() : path.getSrc();
         String spec = param().add("a=blob").add("f=" + path.getPath())
             .add("h=" + h).add("hb=" + path.getChangeSet().getId()).toString();
-        return new URL(url, url.getPath()+spec);
+        return new URL(url, url.getPath() + spec);
     }
 
     @Extension

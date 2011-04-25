@@ -2,7 +2,7 @@ package hudson.plugins.git;
 
 /**
  * An Entry in the Index / Tree
- * 
+ *
  * @author nigelmagnay
  */
 public class IndexEntry {
@@ -43,7 +43,7 @@ public class IndexEntry {
     public String toString() {
         return file;
     }
-  
+
     public IndexEntry(String mode, String type, String object, String file) {
         this.mode = mode;
         this.type = type;

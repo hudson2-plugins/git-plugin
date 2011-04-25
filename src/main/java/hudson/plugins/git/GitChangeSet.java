@@ -1,20 +1,12 @@
 package hudson.plugins.git;
 
-import static hudson.Util.fixEmpty;
-
 import hudson.MarkupText;
-import hudson.Util;
-import hudson.model.Hudson;
 import hudson.model.User;
 import hudson.scm.ChangeLogAnnotator;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.EditType;
 import hudson.tasks.Mailer;
-
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
-
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -22,20 +14,29 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
+
+import static hudson.Util.fixEmpty;
 
 /**
  * Represents a change set.
+ *
  * @author Nigel Magnay
  */
 public class GitChangeSet extends ChangeLogSet.Entry {
+    private static final Logger LOGGER = Logger.getLogger(GitSCM.class.getName());
 
-    private static final Pattern FILE_LOG_ENTRY = Pattern.compile("^:[0-9]{6} [0-9]{6} ([0-9a-f]{40}) ([0-9a-f]{40}) ([ACDMRTUX])(?>[0-9]+)?\t(.*)$");
+    private static final Pattern FILE_LOG_ENTRY = Pattern.compile(
+        "^:[0-9]{6} [0-9]{6} ([0-9a-f]{40}) ([0-9a-f]{40}) ([ACDMRTUX])(?>[0-9]+)?\t(.*)$");
     private static final Pattern AUTHOR_ENTRY = Pattern.compile("^author (.*) <(.*)> (.*) (.*)$");
     private static final Pattern COMMITTER_ENTRY = Pattern.compile("^committer (.*) <(.*)> (.*) (.*)$");
     private static final Pattern RENAME_SPLIT = Pattern.compile("^(.*?)\t(.*)$");
-    
+
     private static final String NULL_HASH = "0000000000000000000000000000000000000000";
     private String committer;
     private String committerEmail;
@@ -51,7 +52,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
     private String parentCommit;
     private Collection<Path> paths = new HashSet<Path>();
     private boolean authorOrCommitter;
-    
+
     public GitChangeSet(List<String> lines, boolean authorOrCommitter) {
         this.authorOrCommitter = authorOrCommitter;
         if (lines.size() > 0) {
@@ -67,7 +68,6 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             if (line.length() > 0) {
                 if (line.startsWith("commit ")) {
                     this.id = line.split(" ")[1];
-                } else if (line.startsWith("tree ")) {
                 } else if (line.startsWith("parent ")) {
                     this.parentCommit = line.split(" ")[1];
                 } else if (line.startsWith("committer ")) {
@@ -120,14 +120,11 @@ public class GitChangeSet extends ChangeLogSet.Entry {
                                     String newPath = copySplitMatcher.group(2);
                                     this.paths.add(new Path(src, dst, 'A', newPath, this));
                                 }
-                            }
-                            else {
+                            } else {
                                 this.paths.add(new Path(src, dst, editMode, path, this));
                             }
                         }
                     }
-                } else {
-                    // Ignore
                 }
             }
         }
@@ -154,12 +151,11 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         String csTime;
         String csTz;
         Date csDate;
-        
+
         if (authorOrCommitter) {
             csTime = this.authorTime;
             csTz = this.authorTz;
-        }
-        else {
+        } else {
             csTime = this.committerTime;
             csTz = this.committerTz;
         }
@@ -174,10 +170,10 @@ public class GitChangeSet extends ChangeLogSet.Entry {
 
         return dateStr;
     }
-        
-            
+
     @Override
     public void setParent(ChangeLogSet parent) {
+        LOGGER.log(Level.FINEST, "Set parent " + parent);
         super.setParent(parent);
     }
 
@@ -197,14 +193,14 @@ public class GitChangeSet extends ChangeLogSet.Entry {
 
     /**
      * Gets the files that are changed in this commit.
-     * @return
-     *      can be empty but never null.
+     *
+     * @return can be empty but never null.
      */
     @Exported
     public Collection<Path> getPaths() {
         return paths;
     }
-    
+
     @Override
     public Collection<Path> getAffectedFiles() {
         return this.paths;
@@ -220,12 +216,11 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         if (authorOrCommitter) {
             csAuthor = this.author;
             csAuthorEmail = this.authorEmail;
-        }
-        else {
+        } else {
             csAuthor = this.committer;
             csAuthorEmail = this.committerEmail;
         }
-        
+
         if (csAuthor == null) {
             throw new RuntimeException("No author in this changeset!");
         }
@@ -237,7 +232,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             try {
                 user.addProperty(new Mailer.UserProperty(csAuthorEmail));
             } catch (IOException e) {
-                // ignore error
+                LOGGER.log(Level.FINEST, "Failed to add email to user properties.", e);
             }
         }
 
@@ -251,25 +246,21 @@ public class GitChangeSet extends ChangeLogSet.Entry {
      */
     public String getAuthorName() {
         String csAuthor;
-        String csAuthorEmail;
 
         // If true, use the author field from git log rather than the committer.
         if (authorOrCommitter) {
             csAuthor = this.author;
-            csAuthorEmail = this.authorEmail;
-        }
-        else {
+        } else {
             csAuthor = this.committer;
-            csAuthorEmail = this.committerEmail;
         }
-        
+
         if (csAuthor == null) {
             throw new RuntimeException("No author in this changeset!");
         }
 
         return csAuthor;
     }
-    
+
     @Override
     @Exported
     public String getMsg() {
@@ -284,7 +275,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
     public String getRevision() {
         return this.id;
     }
-    
+
     @Exported
     public String getComment() {
         return this.comment;
@@ -295,13 +286,14 @@ public class GitChangeSet extends ChangeLogSet.Entry {
      */
     public String getCommentAnnotated() {
         MarkupText markup = new MarkupText(getComment());
-        for (ChangeLogAnnotator a : ChangeLogAnnotator.all())
-            a.annotate(getParent().build,this,markup);
+        for (ChangeLogAnnotator a : ChangeLogAnnotator.all()) {
+            a.annotate(getParent().build, this, markup);
+        }
 
-        return markup.toString();
+        return markup.toString(false);
     }
 
-    @ExportedBean(defaultVisibility=999)
+    @ExportedBean(defaultVisibility = 999)
     public static class Path implements AffectedFile {
 
         private String src;
@@ -326,7 +318,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             return dst;
         }
 
-        @Exported(name="file")
+        @Exported(name = "file")
         public String getPath() {
             return path;
         }
@@ -338,12 +330,12 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         @Exported
         public EditType getEditType() {
             switch (action) {
-            case 'A':
-                return EditType.ADD;
-            case 'D':
-                return EditType.DELETE;
-            default:
-                return EditType.EDIT;
+                case 'A':
+                    return EditType.ADD;
+                case 'D':
+                    return EditType.DELETE;
+                default:
+                    return EditType.EDIT;
             }
         }
     }

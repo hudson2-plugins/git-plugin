@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class SubmoduleConfig implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
-    String   submoduleName;
+    String submoduleName;
     String[] branches;
 
     public String getSubmoduleName() {
@@ -25,7 +25,9 @@ public class SubmoduleConfig implements java.io.Serializable {
 
     public boolean revisionMatchesInterest(Revision r) {
         for (Branch br : r.getBranches()) {
-            if (branchMatchesInterest(br)) return true;
+            if (branchMatchesInterest(br)) {
+                return true;
+            }
         }
         return false;
     }
@@ -43,7 +45,9 @@ public class SubmoduleConfig implements java.io.Serializable {
         String ret = "";
 
         for (String branch : branches) {
-            if (ret.length() > 0) ret += ",";
+            if (ret.length() > 0) {
+                ret += ",";
+            }
             ret += branch;
         }
         return ret;

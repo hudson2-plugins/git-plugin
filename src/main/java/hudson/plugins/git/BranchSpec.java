@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 /**
  * A specification of branches to build. Rather like a refspec.
- * 
+ * <p/>
  * eg:
  * master
  * origin/master
@@ -21,7 +21,7 @@ public class BranchSpec implements Serializable {
 
     private String name;
     private transient Pattern pattern;
-    
+
     public String getName() {
         return name;
     }
@@ -29,66 +29,71 @@ public class BranchSpec implements Serializable {
     public void setName(String value) {
         this.name = value;
     }
-    
+
     public BranchSpec(String name) {
-        if(name == null)
+        if (name == null) {
             throw new IllegalArgumentException();
-        else if(name.length() == 0)
+        } else if (name.length() == 0) {
             this.name = "**";
-        else
+        } else {
             this.name = name;
+        }
     }
-    
+
     public boolean matches(String item) {
         return getPattern().matcher(item).matches();
     }
-    
+
     public List<String> filterMatching(Collection<String> branches) {
         List<String> items = new ArrayList<String>();
-        
-        for(String b : branches) {
-            if(matches(b))
+
+        for (String b : branches) {
+            if (matches(b)) {
                 items.add(b);
+            }
         }
-        
+
         return items;
     }
-    
+
     public List<Branch> filterMatchingBranches(Collection<Branch> branches) {
         List<Branch> items = new ArrayList<Branch>();
-        
-        for(Branch b : branches) {
-            if(matches(b.getName()))
+
+        for (Branch b : branches) {
+            if (matches(b.getName())) {
                 items.add(b);
+            }
         }
-        
+
         return items;
     }
-    
+
     private Pattern getPattern() {
         // return the saved pattern if available
-        if (pattern != null)
+        if (pattern != null) {
             return pattern;
-        
+        }
+
         // if an unqualified branch was given add a "*/" so it will match branches
         // from remote repositories as the user probably intended
         String qualifiedName;
-        if (!name.contains("**") && !name.contains("/"))
+        if (!name.contains("**") && !name.contains("/")) {
             qualifiedName = "*/" + name;
-        else
+        } else {
             qualifiedName = name;
-        
+        }
+
         // build a pattern into this builder
         StringBuilder builder = new StringBuilder();
-        
+
         // was the last token a wildcard?
         boolean foundWildcard = false;
-        
+
         // split the string at the wildcards
         StringTokenizer tokenizer = new StringTokenizer(qualifiedName, "*", true);
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
-            
+
             // is this token is a wildcard?
             if (token.equals("*")) {
                 // yes, was the previous token a wildcard?
@@ -97,13 +102,11 @@ public class BranchSpec implements Serializable {
                     // match over any number of characters
                     builder.append(".*");
                     foundWildcard = false;
-                }
-                else {
+                } else {
                     // no, set foundWildcard to true and go on
                     foundWildcard = true;
                 }
-            }
-            else {
+            } else {
                 // no, was the previous token a wildcard?
                 if (foundWildcard) {
                     // yes, we found "*" followed by a non-wildcard
@@ -115,15 +118,15 @@ public class BranchSpec implements Serializable {
                 builder.append(Pattern.quote(token));
             }
         }
-        
+
         // if the string ended with a wildcard add it now
         if (foundWildcard) {
             builder.append("[^/]*");
         }
-        
+
         // save the pattern
         pattern = Pattern.compile(builder.toString());
-        
+
         return pattern;
     }
 }

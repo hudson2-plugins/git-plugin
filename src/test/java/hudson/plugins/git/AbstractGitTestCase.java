@@ -4,13 +4,12 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.util.StreamTaskListener;
-import org.jvnet.hudson.test.HudsonTestCase;
-import org.spearce.jgit.lib.PersonIdent;
-import org.spearce.jgit.transport.RemoteConfig;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import org.jvnet.hudson.test.HudsonTestCase;
+import org.spearce.jgit.lib.PersonIdent;
+import org.spearce.jgit.transport.RemoteConfig;
 
 /**
  * Base test case for Git related stuff.
@@ -36,6 +35,7 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
         setAuthor(johnDoe);
         setCommitter(johnDoe);
         workspace = new FilePath(workDir);
+        GitTool.onLoaded();
         git = new GitAPI("git", workspace, listener, envVars);
         git.init();
     }
@@ -50,7 +50,8 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
         envVars.put("GIT_COMMITTER_EMAIL", committer.getEmailAddress());
     }
 
-    protected void commit(final String fileName, final PersonIdent committer, final String message) throws GitException {
+    protected void commit(final String fileName, final PersonIdent committer, final String message)
+        throws GitException {
         setAuthor(committer);
         setCommitter(committer);
         FilePath file = workspace.child(fileName);
@@ -65,7 +66,7 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
     }
 
     protected void commit(final String fileName, final PersonIdent author, final PersonIdent committer,
-                        final String message) throws GitException {
+                          final String message) throws GitException {
         setAuthor(author);
         setCommitter(committer);
         FilePath file = workspace.child(fileName);
@@ -80,9 +81,9 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
 
     protected List<RemoteConfig> createRemoteRepositories(String relativeTargetDir) throws IOException {
         return GitSCM.DescriptorImpl.createRepositoryConfigurations(
-                                                                    new String[]{workDir.getAbsolutePath()},
-                                                                    new String[]{"origin"},
-                                                                    new String[]{""}
+            new String[]{workDir.getAbsolutePath()},
+            new String[]{"origin"},
+            new String[]{""}
         );
     }
 

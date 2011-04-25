@@ -39,27 +39,27 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Kohsuke Kawaguchi
  */
 public class GitRevisionBuildParameters extends AbstractBuildParameters {
-	@DataBoundConstructor
-	public GitRevisionBuildParameters() {
-	}
+    @DataBoundConstructor
+    public GitRevisionBuildParameters() {
+    }
 
-	@Override
-	public Action getAction(AbstractBuild<?,?> build, TaskListener listener) {
-		BuildData data = build.getAction(BuildData.class);
-		if (data == null) {
-			listener.getLogger().println("This project doesn't use Git as SCM. Can't pass the revision to downstream");
-			return null;
-		}
+    @Override
+    public Action getAction(AbstractBuild<?, ?> build, TaskListener listener) {
+        BuildData data = build.getAction(BuildData.class);
+        if (data == null) {
+            listener.getLogger().println("This project doesn't use Git as SCM. Can't pass the revision to downstream");
+            return null;
+        }
 
-		return new RevisionParameterAction(data.getLastBuiltRevision().getSha1String());
-	}
+        return new RevisionParameterAction(data.getLastBuiltRevision().getSha1String());
+    }
 
-	@Extension(optional=true)
-	public static class DescriptorImpl extends Descriptor<AbstractBuildParameters> {
-		@Override
-		public String getDisplayName() {
-			return "Pass-through Git Commit that was built";
-		}
-	}
+    @Extension(optional = true)
+    public static class DescriptorImpl extends Descriptor<AbstractBuildParameters> {
+        @Override
+        public String getDisplayName() {
+            return "Pass-through Git Commit that was built";
+        }
+    }
 }
 

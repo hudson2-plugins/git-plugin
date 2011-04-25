@@ -6,10 +6,9 @@ import hudson.plugins.git.GitChangeSet;
 import hudson.plugins.git.GitChangeSet.Path;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
-
 import java.io.IOException;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import net.sf.json.JSONObject;
@@ -35,7 +34,7 @@ public class GithubWeb extends GitRepositoryBrowser {
 
     @Override
     public URL getChangeSetLink(GitChangeSet changeSet) throws IOException {
-        return new URL(url, url.getPath()+"commit/" + changeSet.getId().toString());
+        return new URL(url, url.getPath() + "commit/" + changeSet.getId().toString());
     }
 
     /**
@@ -49,7 +48,7 @@ public class GithubWeb extends GitRepositoryBrowser {
     @Override
     public URL getDiffLink(Path path) throws IOException {
         if (path.getEditType() != EditType.EDIT || path.getSrc() == null || path.getDst() == null
-                || path.getChangeSet().getParentCommit() == null) {
+            || path.getChangeSet().getParentCommit() == null) {
             return null;
         }
         return getDiffLinkRegardlessOfEditType(path);
@@ -76,7 +75,7 @@ public class GithubWeb extends GitRepositoryBrowser {
     /**
      * Creates a link to the file.
      * http://[GitHib URL]/blob/573670a3bb1f3b939e87f1dee3e99b6bfe281fcb/src/main/java/hudson/plugins/git/browser/GithubWeb.java
-     *  Github seems to have no URL for deleted files, so just return
+     * Github seems to have no URL for deleted files, so just return
      * a difflink instead.
      *
      * @param path file
@@ -100,9 +99,9 @@ public class GithubWeb extends GitRepositoryBrowser {
         }
 
         @Override
-		public GithubWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws FormException {
-			return req.bindParameters(GithubWeb.class, "githubweb.");
-		}
-	}
+        public GithubWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws FormException {
+            return req.bindParameters(GithubWeb.class, "githubweb.");
+        }
+    }
 
 }

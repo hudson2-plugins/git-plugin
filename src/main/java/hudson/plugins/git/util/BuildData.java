@@ -1,17 +1,14 @@
 package hudson.plugins.git.util;
 
-import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Api;
 import hudson.plugins.git.Branch;
 import hudson.plugins.git.Revision;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
-
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.spearce.jgit.lib.ObjectId;
@@ -20,8 +17,8 @@ import static hudson.Util.fixNull;
 
 /**
  * Captures the Git related information for a build.
- *
- * <p>
+ * <p/>
+ * <p/>
  * This object is added to {@link AbstractBuild#getActions()} and
  * remember the Git related information of that build.
  */
@@ -31,32 +28,34 @@ public class BuildData implements Action, Serializable, Cloneable {
 
     /**
      * Map of branch name -> build (Branch name to last built SHA1).
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * This map contains all the branches we've built in the past (including the build that this {@link BuildData}
-     * is attached to) 
+     * is attached to)
      */
     public Map<String, Build> buildsByBranchName = new HashMap<String, Build>();
 
     /**
      * The last build that we did (among the values in {@link #buildsByBranchName}.)
      */
-    public Build              lastBuild;
+    public Build lastBuild;
 
 
     public String getDisplayName() {
         return "Git Build Data";
     }
+
     public String getIconFileName() {
         return "/plugin/git/icons/git-32x32.png";
     }
+
     public String getUrlName() {
         return "git";
     }
 
     public Object readResolve() {
-        Map<String,Build> newBuildsByBranchName = new HashMap<String,Build>();
-        
+        Map<String, Build> newBuildsByBranchName = new HashMap<String, Build>();
+
         for (Map.Entry<String, Build> buildByBranchName : buildsByBranchName.entrySet()) {
             String branchName = fixNull(buildByBranchName.getKey());
             Build build = buildByBranchName.getValue();
@@ -67,32 +66,33 @@ public class BuildData implements Action, Serializable, Cloneable {
 
         return this;
     }
-    
+
     /**
      * Return true if the history shows this SHA1 has been built.
      * False otherwise.
+     *
      * @param sha1
      * @return
      */
     public boolean hasBeenBuilt(ObjectId sha1) {
-    	try {
-            for(Build b : buildsByBranchName.values()) {
-                if(b.revision.getSha1().equals(sha1))
+        try {
+            for (Build b : buildsByBranchName.values()) {
+                if (b.revision.getSha1().equals(sha1)) {
                     return true;
+                }
             }
 
             return false;
-    	}
-    	catch(Exception ex) {
+        } catch (Exception ex) {
             return false;
-    	}
+        }
     }
 
     public void saveBuild(Build build) {
-    	lastBuild = build;
-    	for(Branch branch : build.revision.getBranches()) {
+        lastBuild = build;
+        for (Branch branch : build.revision.getBranches()) {
             buildsByBranchName.put(fixNull(branch.getName()), build);
-    	}
+        }
     }
 
     public Build getLastBuildOfBranch(String branch) {
@@ -101,11 +101,11 @@ public class BuildData implements Action, Serializable, Cloneable {
 
     @Exported
     public Revision getLastBuiltRevision() {
-        return lastBuild==null?null:lastBuild.revision;
+        return lastBuild == null ? null : lastBuild.revision;
     }
 
     @Exported
-    public Map<String,Build> getBuildsByBranchName() {
+    public Map<String, Build> getBuildsByBranchName() {
         return buildsByBranchName;
     }
 
@@ -114,8 +114,7 @@ public class BuildData implements Action, Serializable, Cloneable {
         BuildData clone;
         try {
             clone = (BuildData) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException e) {
             throw new RuntimeException("Error cloning BuildData", e);
         }
 
@@ -153,6 +152,6 @@ public class BuildData implements Action, Serializable, Cloneable {
 
     @Override
     public String toString() {
-        return super.toString()+"[buildsByBranchName="+buildsByBranchName+",lastBuild="+lastBuild+"]";
+        return super.toString() + "[buildsByBranchName=" + buildsByBranchName + ",lastBuild=" + lastBuild + "]";
     }
 }

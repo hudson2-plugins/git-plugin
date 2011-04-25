@@ -6,19 +6,16 @@ import hudson.plugins.git.GitChangeSet;
 import hudson.plugins.git.GitChangeSet.Path;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-
 import net.sf.json.JSONObject;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Git Browser for <a href="http://www.redmine.org/">Redmine</a>.
- * 
+ *
  * @author mfriedenhagen
  */
 public class RedmineWeb extends GitRepositoryBrowser {
@@ -43,15 +40,13 @@ public class RedmineWeb extends GitRepositoryBrowser {
 
     /**
      * Creates a link to the file diff.
-     * 
+     * <p/>
      * https://SERVER/PATH/projects/PROJECT/repository/revisions/a9182a07750c9a0dfd89a8461adf72ef5ef0885b/diff/pom.xml
-     * 
+     * <p/>
      * Returns a diff link for {@link EditType#DELETE} and {@link EditType#EDIT}, for {@link EditType#ADD} returns an
      * {@link RedmineWeb#getFileLink(Path)}.
-     * 
-     * 
-     * @param path
-     *            affected file path
+     *
+     * @param path affected file path
      * @return diff link
      * @throws IOException
      */
@@ -72,9 +67,8 @@ public class RedmineWeb extends GitRepositoryBrowser {
      * Creates a link to the file.
      * https://SERVER/PATH/projects/PROJECT/repository/revisions/a9182a07750c9a0dfd89a8461adf72ef5ef0885b/entry/pom.xml
      * For deleted files just returns a diff link, which will have /dev/null as target file.
-     * 
-     * @param path
-     *            file
+     *
+     * @param path file
      * @return file link
      * @throws IOException
      */

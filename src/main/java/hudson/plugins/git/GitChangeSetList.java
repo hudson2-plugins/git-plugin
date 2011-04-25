@@ -1,14 +1,14 @@
 package hudson.plugins.git;
 
-import hudson.scm.ChangeLogSet;
 import hudson.model.AbstractBuild;
-
-import java.util.List;
+import hudson.scm.ChangeLogSet;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * List of changeset that went into a particular build.
+ *
  * @author Nigel Magnay
  */
 public class GitChangeSetList extends ChangeLogSet<GitChangeSet> {
@@ -18,8 +18,9 @@ public class GitChangeSetList extends ChangeLogSet<GitChangeSet> {
         super(build);
         Collections.reverse(logs);  // put new things first
         this.changeSets = Collections.unmodifiableList(logs);
-        for (GitChangeSet log : logs)
+        for (GitChangeSet log : logs) {
             log.setParent(this);
+        }
     }
 
     public boolean isEmptySet() {

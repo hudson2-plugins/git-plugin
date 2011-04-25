@@ -2,9 +2,7 @@ package hudson.plugins.git.util;
 
 import hudson.model.Result;
 import hudson.plugins.git.Revision;
-
 import java.io.Serializable;
-
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.spearce.jgit.lib.ObjectId;
@@ -23,8 +21,8 @@ public class Build implements Serializable, Cloneable {
      */
     public Revision mergeRevision;
 
-    public int      hudsonBuildNumber;
-    public Result   hudsonBuildResult;
+    public int hudsonBuildNumber;
+    public Result hudsonBuildResult;
 
     // TODO: We don't currently store the result correctly.
 
@@ -53,10 +51,13 @@ public class Build implements Serializable, Cloneable {
         return hudsonBuildResult;
     }
 
-    public @Override String toString() {
-        String str =  "Build #" + hudsonBuildNumber + " of " + revision.toString();
-        if(mergeRevision != null)
+    public
+    @Override
+    String toString() {
+        String str = "Build #" + hudsonBuildNumber + " of " + revision.toString();
+        if (mergeRevision != null) {
             str += " merged with " + mergeRevision;
+        }
         return str;
     }
 
@@ -65,15 +66,16 @@ public class Build implements Serializable, Cloneable {
         Build clone;
         try {
             clone = (Build) super.clone();
-        }
-        catch (CloneNotSupportedException e) {
+        } catch (CloneNotSupportedException e) {
             throw new RuntimeException("Error cloning Build", e);
         }
 
-        if (revision != null)
+        if (revision != null) {
             clone.revision = revision.clone();
-        if (mergeRevision != null)
+        }
+        if (mergeRevision != null) {
             clone.mergeRevision = mergeRevision.clone();
+        }
 
         return clone;
     }

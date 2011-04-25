@@ -5,7 +5,7 @@ import org.spearce.jgit.transport.RemoteConfig;
 
 /**
  * Git SCM can optionally perform a merge with another branch (possibly another repository.)
- *
+ * <p/>
  * This object specifies that configuration.
  */
 public class PreBuildMergeOptions implements Serializable {

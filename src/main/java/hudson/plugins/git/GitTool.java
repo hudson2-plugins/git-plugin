@@ -14,17 +14,15 @@ import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
 import hudson.tools.ToolProperty;
 import hudson.util.FormValidation;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
-import javax.servlet.ServletException;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 
 /**
@@ -70,7 +68,7 @@ public final class GitTool extends ToolInstallation implements NodeSpecific<GitT
 
         GitTool tool = new GitTool(defaultValueName, defaultGitExe, Collections.<ToolProperty<?>>emptyList());
 
-        descriptor.setInstallations(new GitTool[] { tool });
+        descriptor.setInstallations(new GitTool[]{tool});
         descriptor.save();
     }
 

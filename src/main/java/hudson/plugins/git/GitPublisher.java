@@ -2,9 +2,9 @@ package hudson.plugins.git;
 
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.Launcher;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
+import hudson.Launcher;
 import hudson.matrix.MatrixAggregatable;
 import hudson.matrix.MatrixAggregator;
 import hudson.matrix.MatrixBuild;
@@ -14,6 +14,7 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.plugins.git.opt.PreBuildMergeOptions;
+import hudson.plugins.git.util.GitConstants;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.SCM;
 import hudson.tasks.BuildStepDescriptor;
@@ -21,23 +22,16 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-
 import org.apache.commons.lang.StringUtils;
-
 import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
-
+import org.kohsuke.stapler.QueryParameter;
 import org.spearce.jgit.transport.RemoteConfig;
-
-import static hudson.plugins.git.util.GitConstants.*;
 
 public class GitPublisher extends Recorder implements Serializable, MatrixAggregatable {
     private static final long serialVersionUID = 1L;
@@ -50,11 +44,11 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
     private boolean pushMerge;
     private boolean pushOnlyIfSuccess;
-    
+
     private List<TagToPush> tagsToPush;
     // Pushes HEAD to these locations
     private List<BranchToPush> branchesToPush;
-    
+
     @DataBoundConstructor
     public GitPublisher(List<TagToPush> tagsToPush,
                         List<BranchToPush> branchesToPush,
@@ -70,7 +64,7 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
     public boolean isPushOnlyIfSuccess() {
         return pushOnlyIfSuccess;
     }
-    
+
     public boolean isPushMerge() {
         return pushMerge;
     }
@@ -104,7 +98,7 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
         return branchesToPush;
     }
-    
+
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.BUILD;
     }
@@ -113,10 +107,10 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
      * For a matrix project, push should only happen once.
      */
     public MatrixAggregator createAggregator(MatrixBuild build, Launcher launcher, BuildListener listener) {
-        return new MatrixAggregator(build,launcher,listener) {
+        return new MatrixAggregator(build, launcher, listener) {
             @Override
             public boolean endBuild() throws InterruptedException, IOException {
-                return GitPublisher.this.perform(build,launcher,listener);
+                return GitPublisher.this.perform(build, launcher, listener);
             }
         };
     }
@@ -147,10 +141,11 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
         // If pushOnlyIfSuccess is selected and the build is not a success, don't push.
         if (pushOnlyIfSuccess && buildResult.isWorseThan(Result.SUCCESS)) {
-            listener.getLogger().println("Build did not succeed and the project is configured to only push after a successful build, so no pushing will occur.");
+            listener.getLogger()
+                .println(
+                    "Build did not succeed and the project is configured to only push after a successful build, so no pushing will occur.");
             return true;
-        }
-        else {
+        } else {
             final String gitExe = gitSCM.getGitExe(build.getBuiltOn(), listener);
             EnvVars tempEnvironment;
             try {
@@ -162,77 +157,78 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
             String confName = gitSCM.getGitConfigNameToUse();
             if ((confName != null) && (!confName.equals(""))) {
-                tempEnvironment.put(GIT_COMMITTER_NAME_ENV_VAR, confName);
-                tempEnvironment.put(GIT_AUTHOR_NAME_ENV_VAR, confName);
+                tempEnvironment.put(GitConstants.GIT_COMMITTER_NAME_ENV_VAR, confName);
+                tempEnvironment.put(GitConstants.GIT_AUTHOR_NAME_ENV_VAR, confName);
             }
             String confEmail = gitSCM.getGitConfigEmailToUse();
             if ((confEmail != null) && (!confEmail.equals(""))) {
-                tempEnvironment.put(GIT_COMMITTER_EMAIL_ENV_VAR, confEmail);
-                tempEnvironment.put(GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
+                tempEnvironment.put(GitConstants.GIT_COMMITTER_EMAIL_ENV_VAR, confEmail);
+                tempEnvironment.put(GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
             }
-            
+
             final EnvVars environment = tempEnvironment;
             final FilePath workingDirectory = gitSCM.workingDirectory(workspacePath);
-            
+
             boolean pushResult = true;
             // If we're pushing the merge back...
             if (pushMerge) {
                 boolean mergeResult;
                 try {
                     mergeResult = workingDirectory.act(new FileCallable<Boolean>() {
-                            private static final long serialVersionUID = 1L;
-                            
-                            public Boolean invoke(File workspace,
-                                                  VirtualChannel channel) throws IOException {
-                                
-                                IGitAPI git = new GitAPI(
-                                                         gitExe, new FilePath(workspace),
-                                                         listener, environment);
-                                // We delete the old tag generated by the SCM plugin
-                                String tagName = new StringBuilder().append(INTERNAL_TAG_NAME_PREFIX)
-                                    .append(HYPHEN_SYMBOL)
-                                    .append(projectName)
-                                    .append(HYPHEN_SYMBOL)
-                                    .append(buildNumber)
-                                    .toString();
+                        private static final long serialVersionUID = 1L;
 
-                                git.deleteTag(tagName);
-                                
-                                // And add the success / fail state into the tag.
-                                tagName += "-" + buildResult.toString();
-                                
-                                git.tag(tagName, INTERNAL_TAG_COMMENT_PREFIX + buildNumber);
-                                
-                                PreBuildMergeOptions mergeOptions = gitSCM.getMergeOptions();
-                                
-                                if (mergeOptions.doMerge() && buildResult.isBetterOrEqualTo(
-                                                                                            Result.SUCCESS)) {
-                                    RemoteConfig remote = mergeOptions.getMergeRemote();
-                                    listener.getLogger().println(new StringBuilder().append("Pushing result ")
-                                        .append(tagName)
-                                        .append(" to ")
-                                        .append(mergeOptions.getMergeTarget())
-                                        .append(" branch of ")
-                                        .append(remote.getName())
-                                        .append(" repository")
-                                        .toString());
-                                    
-                                    git.push(remote, "HEAD:" + mergeOptions.getMergeTarget());
-                                } else {
-                                    //listener.getLogger().println("Pushing result " + buildnumber + " to origin repository");
-                                    //git.push(null);
-                                }
-                                
-                                return true;
+                        public Boolean invoke(File workspace,
+                                              VirtualChannel channel) throws IOException {
+
+                            IGitAPI git = new GitAPI(
+                                gitExe, new FilePath(workspace),
+                                listener, environment);
+                            // We delete the old tag generated by the SCM plugin
+                            String tagName = new StringBuilder()
+                                .append(GitConstants.INTERNAL_TAG_NAME_PREFIX)
+                                .append(GitConstants.HYPHEN_SYMBOL)
+                                .append(projectName)
+                                .append(GitConstants.HYPHEN_SYMBOL)
+                                .append(buildNumber)
+                                .toString();
+
+                            git.deleteTag(tagName);
+
+                            // And add the success / fail state into the tag.
+                            tagName += "-" + buildResult.toString();
+
+                            git.tag(tagName, GitConstants.INTERNAL_TAG_COMMENT_PREFIX + buildNumber);
+
+                            PreBuildMergeOptions mergeOptions = gitSCM.getMergeOptions();
+
+                            if (mergeOptions.doMerge() && buildResult.isBetterOrEqualTo(
+                                Result.SUCCESS)) {
+                                RemoteConfig remote = mergeOptions.getMergeRemote();
+                                listener.getLogger().println(new StringBuilder().append("Pushing result ")
+                                    .append(tagName)
+                                    .append(" to ")
+                                    .append(mergeOptions.getMergeTarget())
+                                    .append(" branch of ")
+                                    .append(remote.getName())
+                                    .append(" repository")
+                                    .toString());
+
+                                git.push(remote, "HEAD:" + mergeOptions.getMergeTarget());
+//                            } else {
+                                //listener.getLogger().println("Pushing result " + buildnumber + " to origin repository");
+                                //git.push(null);
                             }
-                        });
+
+                            return true;
+                        }
+                    });
                 } catch (Throwable e) {
                     listener.error("Failed to push merge to origin repository: " + e.getMessage());
                     build.setResult(Result.FAILURE);
                     mergeResult = false;
-                    
+
                 }
-                
+
                 if (!mergeResult) {
                     pushResult = false;
                 }
@@ -252,51 +248,55 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                     if (tagResult) {
                         final String tagName = environment.expand(t.getTagName());
                         final String targetRepo = environment.expand(t.getTargetRepoName());
-                        
+
                         try {
                             tagResult = workingDirectory.act(new FileCallable<Boolean>() {
-                                    private static final long serialVersionUID = 1L;
-                                    
-                                    public Boolean invoke(File workspace,
-                                                          VirtualChannel channel) throws IOException {
-                                        
-                                        IGitAPI git = new GitAPI(gitExe, new FilePath(workspace),
-                                                                 listener, environment);
-                                        
-                                        RemoteConfig remote = gitSCM.getRepositoryByName(targetRepo);
-                                        
-                                        if (remote == null) {
-                                            listener.getLogger().println("No repository found for target repo name " + targetRepo);
-                                            return false;
-                                        }
-                                        
-                                        if (t.isCreateTag()) {
-                                            if (git.tagExists(tagName)) {
-                                                listener.getLogger().println("Tag " + tagName + " already exists and Create Tag is specified, so failing.");
-                                                return false;
-                                            }
-                                            git.tag(tagName, "Hudson Git plugin tagging with " + tagName);
-                                        }
-                                        else if (!git.tagExists(tagName)) {
-                                            listener.getLogger().println("Tag " + tagName + " does not exist and Create Tag is not specified, so failing.");
-                                            return false;
-                                        }
-                                        
-                                        listener.getLogger().println("Pushing tag " + tagName + " to repo "
-                                                                     + targetRepo);
-                                        git.push(remote, tagName);
-                                        
-                                        return true;
+                                private static final long serialVersionUID = 1L;
+
+                                public Boolean invoke(File workspace,
+                                                      VirtualChannel channel) throws IOException {
+
+                                    IGitAPI git = new GitAPI(gitExe, new FilePath(workspace),
+                                        listener, environment);
+
+                                    RemoteConfig remote = gitSCM.getRepositoryByName(targetRepo);
+
+                                    if (remote == null) {
+                                        listener.getLogger()
+                                            .println("No repository found for target repo name " + targetRepo);
+                                        return false;
                                     }
-                                });
+
+                                    if (t.isCreateTag()) {
+                                        if (git.tagExists(tagName)) {
+                                            listener.getLogger()
+                                                .println("Tag " + tagName
+                                                    + " already exists and Create Tag is specified, so failing.");
+                                            return false;
+                                        }
+                                        git.tag(tagName, "Hudson Git plugin tagging with " + tagName);
+                                    } else if (!git.tagExists(tagName)) {
+                                        listener.getLogger()
+                                            .println("Tag " + tagName
+                                                + " does not exist and Create Tag is not specified, so failing.");
+                                        return false;
+                                    }
+
+                                    listener.getLogger().println("Pushing tag " + tagName + " to repo "
+                                        + targetRepo);
+                                    git.push(remote, tagName);
+
+                                    return true;
+                                }
+                            });
                         } catch (Throwable e) {
                             listener.error("Failed to push tag " + tagName + " to " + targetRepo
-                                           + ": " + e.getMessage());
+                                + ": " + e.getMessage());
                             build.setResult(Result.FAILURE);
                             tagResult = false;
                         }
                     }
-                    
+
                     if (!tagResult) {
                         allTagsResult = false;
                     }
@@ -305,7 +305,7 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                     pushResult = false;
                 }
             }
-            
+
             if (isPushBranches()) {
                 boolean allBranchesResult = true;
                 for (final BranchToPush b : branchesToPush) {
@@ -320,40 +320,41 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                     }
                     final String branchName = environment.expand(b.getBranchName());
                     final String targetRepo = environment.expand(b.getTargetRepoName());
-                    
+
                     if (branchResult) {
                         try {
                             branchResult = workingDirectory.act(new FileCallable<Boolean>() {
-                                    private static final long serialVersionUID = 1L;
-                                    
-                                    public Boolean invoke(File workspace,
-                                                          VirtualChannel channel) throws IOException {
-                                        
-                                        IGitAPI git = new GitAPI(gitExe, new FilePath(workspace),
-                                                                 listener, environment);
-                                        
-                                        RemoteConfig remote = gitSCM.getRepositoryByName(targetRepo);
-                                        
-                                        if (remote == null) {
-                                            listener.getLogger().println("No repository found for target repo name " + targetRepo);
-                                            return false;
-                                        }
-                                        
-                                        listener.getLogger().println("Pushing HEAD to branch " + branchName + " at repo "
-                                                                     + targetRepo);
-                                        git.push(remote, "HEAD:" + branchName);
-                                        
-                                        return true;
+                                private static final long serialVersionUID = 1L;
+
+                                public Boolean invoke(File workspace,
+                                                      VirtualChannel channel) throws IOException {
+
+                                    IGitAPI git = new GitAPI(gitExe, new FilePath(workspace),
+                                        listener, environment);
+
+                                    RemoteConfig remote = gitSCM.getRepositoryByName(targetRepo);
+
+                                    if (remote == null) {
+                                        listener.getLogger()
+                                            .println("No repository found for target repo name " + targetRepo);
+                                        return false;
                                     }
-                                });
+
+                                    listener.getLogger().println("Pushing HEAD to branch " + branchName + " at repo "
+                                        + targetRepo);
+                                    git.push(remote, "HEAD:" + branchName);
+
+                                    return true;
+                                }
+                            });
                         } catch (Throwable e) {
                             listener.error("Failed to push branch " + branchName + " to "
-                                           + targetRepo + ": " + e.getMessage());
+                                + targetRepo + ": " + e.getMessage());
                             build.setResult(Result.FAILURE);
                             branchResult = false;
                         }
                     }
-                    
+
                     if (!branchResult) {
                         allBranchesResult = false;
                     }
@@ -361,9 +362,9 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
                 if (!allBranchesResult) {
                     pushResult = false;
                 }
-                
+
             }
-            
+
             return pushResult;
         }
     }
@@ -371,23 +372,23 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
     /**
      * Handles migration from earlier version - if we were pushing merges, we'll be
      * instantiated but tagsToPush will be null rather than empty.
+     *
      * @return This.
      */
     private Object readResolve() {
         // Default unspecified to v0
-        if(configVersion == null)
+        if (configVersion == null) {
             this.configVersion = 0L;
+        }
 
-        if (this.configVersion < 1L) {
-            if (tagsToPush == null) {
-                this.pushMerge = true;
-            }
+        if (this.configVersion < 1L && tagsToPush == null) {
+            this.pushMerge = true;
         }
 
         return this;
     }
-    
-    @Extension(ordinal=-1)
+
+    @Extension(ordinal = -1)
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         public String getDisplayName() {
             return "Git Publisher";
@@ -400,13 +401,12 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
         /**
          * Performs on-the-fly validation on the file mask wildcard.
-         *
+         * <p/>
          * I don't think this actually ever gets called, but I'm modernizing it anyway.
-         *
          */
         public FormValidation doCheck(@AncestorInPath AbstractProject project, @QueryParameter String value)
-            throws IOException  {
-            return FilePath.validateFileMask(project.getSomeWorkspace(),value);
+            throws IOException {
+            return FilePath.validateFileMask(project.getSomeWorkspace(), value);
         }
 
         public FormValidation doCheckTagName(@QueryParameter String value) {
@@ -416,7 +416,7 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
         public FormValidation doCheckBranchName(@QueryParameter String value) {
             return checkFieldNotEmpty(value, "Branch Name");
         }
-                
+
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
@@ -433,13 +433,13 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
 
     public static abstract class PushConfig implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         private String targetRepoName;
 
         public PushConfig(String targetRepoName) {
             this.targetRepoName = targetRepoName;
         }
-        
+
         public String getTargetRepoName() {
             return targetRepoName;
         }
@@ -483,5 +483,5 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
         }
     }
 
-    
+
 }

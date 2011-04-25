@@ -1,7 +1,6 @@
 package hudson.plugins.git;
 
 import hudson.Plugin;
-
 import java.io.IOException;
 
 /**

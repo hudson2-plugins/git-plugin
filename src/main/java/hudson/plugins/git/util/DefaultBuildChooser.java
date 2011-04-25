@@ -8,15 +8,14 @@ import hudson.plugins.git.GitException;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.IGitAPI;
 import hudson.plugins.git.Revision;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.spearce.jgit.lib.ObjectId;
-
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.spearce.jgit.lib.ObjectId;
 
 import static java.util.Collections.emptyList;
 
@@ -27,10 +26,10 @@ public class DefaultBuildChooser extends BuildChooser {
 
     /**
      * Determines which Revisions to build.
-     *
+     * <p/>
      * If only one branch is chosen and only one repository is listed, then
      * just attempt to find the latest revision number for the chosen branch.
-     *
+     * <p/>
      * If multiple branches are selected or the branches include wildcards, then
      * use the advanced usecase as defined in the getAdvancedCandidateRevisons
      * method.
@@ -42,12 +41,14 @@ public class DefaultBuildChooser extends BuildChooser {
                                                       IGitAPI git, TaskListener listener, BuildData data)
         throws GitException, IOException {
 
-        verbose(listener,"getCandidateRevisions({0},{1},,,{2}) considering branches to build",isPollCall,singleBranch,data);
+        verbose(listener, "getCandidateRevisions({0},{1},,,{2}) considering branches to build", isPollCall,
+            singleBranch, data);
 
         // if the branch name contains more wildcards then the simple usecase
         // does not apply and we need to skip to the advanced usecase
-        if (singleBranch == null || singleBranch.contains("*"))
-            return getAdvancedCandidateRevisions(isPollCall,listener,new GitUtils(listener,git),data);
+        if (singleBranch == null || singleBranch.contains("*")) {
+            return getAdvancedCandidateRevisions(isPollCall, listener, new GitUtils(listener, git), data);
+        }
 
         // check if we're trying to build a specific commit
         // this only makes sense for a build, there is no
@@ -57,7 +58,7 @@ public class DefaultBuildChooser extends BuildChooser {
                 ObjectId sha1 = git.revParse(singleBranch);
                 Revision revision = new Revision(sha1);
                 revision.getBranches().add(new Branch("detached", sha1));
-                verbose(listener,"Will build the detached SHA1 {0}",sha1);
+                verbose(listener, "Will build the detached SHA1 {0}", sha1);
                 return Collections.singletonList(revision);
             } catch (GitException e) {
                 // revision does not exist, may still be a branch
@@ -70,11 +71,12 @@ public class DefaultBuildChooser extends BuildChooser {
         if (!singleBranch.contains("/")) {
             // the 'branch' could actually be a tag:
             Set<String> tags = git.getTagNames(singleBranch);
-            if(tags.size() == 0) {
+            if (tags.size() == 0) {
                 // its not a tag, so lets fully qualify the branch
                 String repository = gitSCM.getRepositories().get(0).getName();
                 singleBranch = repository + "/" + singleBranch;
-                verbose(listener, "{0} is not a tag. Qualifying with the repository {1} a a branch", singleBranch, repository);
+                verbose(listener, "{0} is not a tag. Qualifying with the repository {1} a a branch", singleBranch,
+                    repository);
             }
         }
 
@@ -103,22 +105,25 @@ public class DefaultBuildChooser extends BuildChooser {
 
     /**
      * In order to determine which Revisions to build.
-     *
+     * <p/>
      * Does the following :
-     *  1. Find all the branch revisions
-     *  2. Filter out branches that we don't care about from the revisions.
-     *     Any Revisions with no interesting branches are dropped.
-     *  3. Get rid of any revisions that are wholly subsumed by another
-     *     revision we're considering.
-     *  4. Get rid of any revisions that we've already built.
+     * 1. Find all the branch revisions
+     * 2. Filter out branches that we don't care about from the revisions.
+     * Any Revisions with no interesting branches are dropped.
+     * 3. Get rid of any revisions that are wholly subsumed by another
+     * revision we're considering.
+     * 4. Get rid of any revisions that we've already built.
+     * <p/>
+     * NB: Alternate BuildChooser implementations are possible - this
+     * may be beneficial if "only 1" branch is to be built, as much of
+     * this work is irrelevant in that usecase.
      *
-     *  NB: Alternate BuildChooser implementations are possible - this
-     *  may be beneficial if "only 1" branch is to be built, as much of
-     *  this work is irrelevant in that usecase.
      * @throws IOException
      * @throws GitException
      */
-    private Collection<Revision> getAdvancedCandidateRevisions(boolean isPollCall, TaskListener listener, GitUtils utils, BuildData data) throws GitException, IOException {
+    private Collection<Revision> getAdvancedCandidateRevisions(boolean isPollCall, TaskListener listener,
+                                                               GitUtils utils, BuildData data)
+        throws GitException, IOException {
         // 1. Get all the (branch) revisions that exist
         Collection<Revision> revs = utils.getAllBranchRevisions();
         verbose(listener, "Starting with all the branches: {0}", revs);
@@ -171,7 +176,8 @@ public class DefaultBuildChooser extends BuildChooser {
         // if we're trying to run a build (not an SCM poll) and nothing new
         // was found then just run the last build again
         if (!isPollCall && revs.isEmpty() && data.getLastBuiltRevision() != null) {
-            verbose(listener, "Nothing seems worth building, so falling back to the previously built revision: {0}", data.getLastBuiltRevision());
+            verbose(listener, "Nothing seems worth building, so falling back to the previously built revision: {0}",
+                data.getLastBuiltRevision());
             return Collections.singletonList(data.getLastBuiltRevision());
         }
 
@@ -182,8 +188,9 @@ public class DefaultBuildChooser extends BuildChooser {
      * Write the message to the listener only when the verbose mode is on.
      */
     private void verbose(TaskListener listener, String format, Object... args) {
-        if (GitSCM.VERBOSE)
-            listener.getLogger().println(MessageFormat.format(format,args));
+        if (GitSCM.VERBOSE) {
+            listener.getLogger().println(MessageFormat.format(format, args));
+        }
     }
 
     @Extension
