@@ -27,6 +27,7 @@ import static hudson.Util.fixEmpty;
  * Represents a change set.
  *
  * @author Nigel Magnay
+ * @author Nikita Levyankov
  */
 public class GitChangeSet extends ChangeLogSet.Entry {
     private static final Logger LOGGER = Logger.getLogger(GitSCM.class.getName());
@@ -181,8 +182,9 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         return parentCommit;
     }
 
-
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Collection<String> getAffectedPaths() {
         Collection<String> affectedPaths = new HashSet<String>(this.paths.size());
         for (Path file : this.paths) {
@@ -201,12 +203,14 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         return paths;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Collection<Path> getAffectedFiles() {
         return this.paths;
     }
 
-    @Override
     @Exported
     public User getAuthor() {
         String csAuthor;
@@ -243,6 +247,8 @@ public class GitChangeSet extends ChangeLogSet.Entry {
      * Gets the author name for this changeset - note that this is mainly here
      * so that we can test authorOrCommitter without needing a fully instantiated
      * Hudson (which is needed for User.get in getAuthor()).
+     *
+     * @return author name.
      */
     public String getAuthorName() {
         String csAuthor;
@@ -261,7 +267,13 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         return csAuthor;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
+    public String getUser() {
+        return getAuthorName();
+    }
+
     @Exported
     public String getMsg() {
         return this.title;
@@ -272,8 +284,22 @@ public class GitChangeSet extends ChangeLogSet.Entry {
         return this.id;
     }
 
+    /**
+     * @return revision id
+     * @deprecated
+     * @since 2.0.1
+     * @see #getCurrentRevision()
+     */
     public String getRevision() {
         return this.id;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getCurrentRevision() {
+        return getRevision();
     }
 
     @Exported
