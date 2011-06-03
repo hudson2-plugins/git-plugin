@@ -46,7 +46,7 @@
                 <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
                     <forkMode>always</forkMode>
-                    <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
+                    <forkedProcessTimeoutInSeconds>500</forkedProcessTimeoutInSeconds>
                     <systemPropertyVariables>
                         <file.encoding>UTF-8</file.encoding>
                         <buildDirectory>${project.build.directory}</buildDirectory>
