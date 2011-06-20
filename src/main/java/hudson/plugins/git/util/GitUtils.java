@@ -26,9 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.spearce.jgit.lib.ObjectId;
 
 public class GitUtils {
+    private static final String DEFAULD_REPO_NAME = "origin";
+
     IGitAPI git;
     TaskListener listener;
 
@@ -177,7 +181,7 @@ public class GitUtils {
 
             if (lastBuiltOn != null) {
                 for (NodeProperty nodeProperty : lastBuiltOn.getNodeProperties()) {
-                    Environment environment = nodeProperty.setUp(b, launcher, (BuildListener) buildListener);
+                    Environment environment = nodeProperty.setUp(b, launcher, buildListener);
                     if (environment != null) {
                         environment.buildEnvVars(env);
                     }
@@ -200,7 +204,7 @@ public class GitUtils {
             String name = names[i];
 
             if (name == null || name.trim().length() == 0) {
-                name = "origin";
+                name = DEFAULD_REPO_NAME;
             }
 
             String baseName = name;
@@ -215,6 +219,24 @@ public class GitUtils {
 
 
         return returnNames;
+    }
+
+    /**
+     * Verifies whether array of the repository Urls is empty.
+     *
+     * @param urls repository Urls.
+     * @return true if array is empty.
+     */
+    public static boolean isEmpty(String[] urls) {
+        if(ArrayUtils.isEmpty(urls)){
+            return true;
+        }
+        for (String url : urls) {
+            if(StringUtils.isNotEmpty(url)){
+                return false;
+            }
+        }
+        return true;
     }
 
     private static final Logger LOGGER = Logger.getLogger(GitUtils.class.getName());

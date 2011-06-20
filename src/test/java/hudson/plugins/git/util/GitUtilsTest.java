@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ * Copyright (c) 2004-2011, Oracle Corporation, Anton Kozak.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package hudson.plugins.git.util;
 
-package hudson.plugins.git;
+import org.junit.Test;
 
-import hudson.Plugin;
-import java.io.IOException;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Plugin entry point.
+ * Test for {@link GitUtils}
+ * <p/>
+ * Date: 6/20/11
  *
- * @author Nigel Magnay
- * @plugin
+ * @author Anton Kozak
  */
-public class PluginImpl extends Plugin {
-    @Override
-    public void postInitialize() throws IOException {
-        GitTool.onLoaded();
+public class GitUtilsTest {
+    @Test
+    public void testIsEmpty(){
+        assertTrue(GitUtils.isEmpty(new String[]{}));
+        assertTrue(GitUtils.isEmpty(new String[]{"",""}));
+        assertFalse(GitUtils.isEmpty(new String[]{"url1", ""}));
     }
 }
