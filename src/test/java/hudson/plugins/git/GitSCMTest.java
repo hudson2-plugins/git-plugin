@@ -1,3 +1,26 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 package hudson.plugins.git;
 
 import hudson.EnvVars;
@@ -92,7 +115,8 @@ public class GitSCMTest extends AbstractGitTestCase {
 
         final String commitFile2 = "commitFile2";
         commit(commitFile2, janeDoe, "Commit number 2");
-        assertFalse("scm polling detected commit2 change, which should have been excluded", project.pollSCMChanges(listener));
+        assertFalse("scm polling detected commit2 change, which should have been excluded",
+            project.pollSCMChanges(listener));
         final String commitFile3 = "commitFile3";
         commit(commitFile3, johnDoe, "Commit number 3");
         assertTrue("scm polling did not detect commit3 change", project.pollSCMChanges(listener));
@@ -100,8 +124,8 @@ public class GitSCMTest extends AbstractGitTestCase {
         final FreeStyleBuild build2 = build(project, Result.SUCCESS, commitFile2, commitFile3);
         final Set<User> culprits = build2.getCulprits();
         assertEquals("The build should have two culprit", 2, culprits.size());
-        assertEquals("", johnDoe.getName(), ((User)culprits.toArray()[0]).getFullName());
-        assertEquals("", janeDoe.getName(), ((User)culprits.toArray()[1]).getFullName());
+        assertEquals("", johnDoe.getName(), ((User) culprits.toArray()[0]).getFullName());
+        assertEquals("", janeDoe.getName(), ((User) culprits.toArray()[1]).getFullName());
         assertTrue(build2.getWorkspace().child(commitFile2).exists());
         assertTrue(build2.getWorkspace().child(commitFile3).exists());
         assertBuildStatusSuccess(build2);
@@ -131,7 +155,7 @@ public class GitSCMTest extends AbstractGitTestCase {
         assertEquals("The workspace should have a 'subdir' subdirectory, but does not.", true,
                      build2.getWorkspace().child("subdir").exists());
         assertEquals("The 'subdir' subdirectory should contain commitFile2, but does not.", true,
-                     build2.getWorkspace().child("subdir").child(commitFile2).exists());
+            build2.getWorkspace().child("subdir").child(commitFile2).exists());
         assertBuildStatusSuccess(build2);
         assertFalse("scm polling should not detect any more changes after build", project.pollSCMChanges(listener));
     }
@@ -238,7 +262,7 @@ public class GitSCMTest extends AbstractGitTestCase {
 
         assertEquals("The build should have only one culprit", 1, secondCulprits.size());
         assertEquals("Did not get the author as the change author with authorOrCommiter==true",
-                     johnDoe.getName(), secondCulprits.iterator().next().getFullName());
+            johnDoe.getName(), secondCulprits.iterator().next().getFullName());
     }
 
     /**
@@ -258,7 +282,8 @@ public class GitSCMTest extends AbstractGitTestCase {
         //.. and commit to it:
         final String commitFile2 = "commitFile2";
         commit(commitFile2, johnDoe, "Commit number 2");
-        assertFalse("scm polling should not detect commit2 change because it is not in the branch we are tracking.", project.pollSCMChanges(listener));
+        assertFalse("scm polling should not detect commit2 change because it is not in the branch we are tracking.",
+            project.pollSCMChanges(listener));
     }
 
     public void testBranchIsAvailableInEvironment() throws Exception {
@@ -342,7 +367,7 @@ public class GitSCMTest extends AbstractGitTestCase {
      */
     public void testMultipleBranchBuild() throws Exception {
         // empty string will result in a project that tracks against changes in all branches:
-        final FreeStyleProject project = setupSimpleProject("");
+        final FreeStyleProject project = setupSimpleProject("**");
         final String commitFile1 = "commitFile1";
         commit(commitFile1, johnDoe, "Commit number 1");
         build(project, Result.SUCCESS, commitFile1);

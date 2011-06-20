@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ * Copyright (c) 2004-2011, Oracle Corporation Anton Kozak.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package hudson.plugins.git;
 
-package hudson.plugins.git.browser;
-
-import hudson.plugins.git.GitChangeSet;
-import hudson.scm.RepositoryBrowser;
+import hudson.model.Descriptor;
 import java.io.IOException;
-import java.net.URL;
+import org.junit.Test;
 
-public abstract class GitRepositoryBrowser extends RepositoryBrowser<GitChangeSet> {
-    /**
-     * Determines the link to the diff between the version
-     * in the specified revision of {@link GitChangeSet.Path} to its previous version.
-     *
-     * @param path affected file path
-     * @return null if the browser doesn't have any URL for diff.
-     * @throws IOException
-     */
-    public abstract URL getDiffLink(GitChangeSet.Path path) throws IOException;
+/**
+ * Unit tests for {@link hudson.plugins.git.GitSCM}.
+ */
+public class GitSCMUnitTest{
 
-    /**
-     * Determines the link to a single file under Git.
-     * This page should display all the past revisions of this file, etc.
-     *
-     * @param path affected file path
-     * @return null if the browser doesn't have any suitable URL.
-     * @throws IOException
-     */
-    public abstract URL getFileLink(GitChangeSet.Path path) throws IOException;
+    @Test(expected = Descriptor.FormException.class)
+    public void testCreateRepositoryConfigurationsEmptyUrls() throws Descriptor.FormException, IOException {
+        GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{},
+            new String[]{}, new String[]{});
+    }
 
-    private static final long serialVersionUID = 1L;
+    @Test(expected = Descriptor.FormException.class)
+    public void testCreateRepositoryConfigurationsEmptyUrls2() throws Descriptor.FormException, IOException {
+        String[] urls = new String[]{""};
+        GitSCM.DescriptorImpl.createRepositoryConfigurations(urls,
+            new String[]{}, new String[]{});
+    }
 }
+

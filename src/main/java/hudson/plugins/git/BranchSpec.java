@@ -34,7 +34,7 @@ public class BranchSpec implements Serializable {
         if (name == null) {
             throw new IllegalArgumentException();
         } else if (name.length() == 0) {
-            this.name = "**";
+            this.name = GitSCM.DEFAULT_BRANCH;
         } else {
             this.name = name;
         }
