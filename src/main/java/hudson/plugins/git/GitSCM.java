@@ -1,3 +1,27 @@
+/*
+ * The MIT License
+ *
+ * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package hudson.plugins.git;
 
 import hudson.EnvVars;
@@ -11,6 +35,7 @@ import hudson.matrix.MatrixRun;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -53,6 +78,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -74,6 +101,7 @@ public class GitSCM extends SCM implements Serializable {
     public static final String GIT_COMMIT = "GIT_COMMIT";
 
     private static final long serialVersionUID = 1L;
+    static final String DEFAULT_BRANCH = "master";
 
     // old fields are left so that old config data can be read in, but
     // they are deprecated. transient so that they won't show up in XML
@@ -161,7 +189,7 @@ public class GitSCM extends SCM implements Serializable {
      * @param repositoryUrl Repository URL to clone from.
      * @throws java.io.IOException exception.
      */
-    public GitSCM(String repositoryUrl) throws IOException {
+    public GitSCM(String repositoryUrl) throws IOException, Descriptor.FormException {
         this(
             DescriptorImpl.createRepositoryConfigurations(new String[]{repositoryUrl}, new String[]{null},
                 new String[]{null}),
@@ -244,7 +272,7 @@ public class GitSCM extends SCM implements Serializable {
             if (branch != null) {
                 branches.add(new BranchSpec(branch));
             } else {
-                branches.add(new BranchSpec("*/master"));
+                branches.add(new BranchSpec(DEFAULT_BRANCH));
             }
         }
 
@@ -976,7 +1004,7 @@ public class GitSCM extends SCM implements Serializable {
                     req.getParameterValues("git.repo.name"),
                     req.getParameterValues("git.repo.refspec"));
             } catch (IOException e1) {
-                throw new GitException("Error creating repositories", e1);
+                throw new GitException(hudson.plugins.git.Messages.GitSCM_Repository_CreationExceptionMsg(), e1);
             }
             List<BranchSpec> branches = createBranches(req.getParameterValues("git.branch"));
 
@@ -986,9 +1014,6 @@ public class GitSCM extends SCM implements Serializable {
                 req.getParameter("git.mergeRemote"), req.getParameter("git.mergeTarget"),
                 remoteRepositories);
 
-
-            String[] urls = req.getParameterValues("git.repo.url");
-            String[] names = req.getParameterValues("git.repo.name");
             Collection<SubmoduleConfig> submoduleCfg = new ArrayList<SubmoduleConfig>();
 
             final GitRepositoryBrowser gitBrowser = getBrowserFromRequest(req, formData);
@@ -1016,12 +1041,17 @@ public class GitSCM extends SCM implements Serializable {
                 req.getParameter("git.skipTag") != null);
         }
 
-        public static List<RemoteConfig> createRepositoryConfigurations(String[] pUrls,
-                                                                        String[] repoNames,
-                                                                        String[] refSpecs) throws IOException {
+        public static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] repoNames,
+                                                                        String[] refSpecs)
+            throws IOException, FormException {
+            if (GitUtils.isEmpty(urls)) {
+                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
+                    "git.repo.url");
+            }
+
             File temp = File.createTempFile("tmp", "config");
             try {
-                return createRepositoryConfigurations(pUrls, repoNames, refSpecs, temp);
+                return createRepositoryConfigurations(urls, repoNames, refSpecs, temp);
             } finally {
                 temp.delete();
             }
@@ -1030,52 +1060,46 @@ public class GitSCM extends SCM implements Serializable {
         /**
          * @deprecated Use {@link #createRepositoryConfigurations(String[], String[], String[])}
          */
-        public static List<RemoteConfig> createRepositoryConfigurations(String[] pUrls,
-                                                                        String[] repoNames,
-                                                                        String[] refSpecs,
-                                                                        File temp) {
+        private static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] names,
+                                                                        String[] refSpecs, File temp) {
             List<RemoteConfig> remoteRepositories;
             RepositoryConfig repoConfig = new RepositoryConfig(null, temp);
             // Make up a repo config from the request parameters
-
-            String[] urls = pUrls;
-            String[] names = repoNames;
-
             names = GitUtils.fixupNames(names, urls);
-
-            String[] refs = refSpecs;
             if (names != null) {
                 for (int i = 0; i < names.length; i++) {
                     String name = names[i];
                     name = name.replace(' ', '_');
-
-                    if (refs[i] == null || refs[i].length() == 0) {
-                        refs[i] = "+refs/heads/*:refs/remotes/" + name + "/*";
+                    if (StringUtils.isEmpty(refSpecs[i])) {
+                        refSpecs[i] = "+refs/heads/*:refs/remotes/" + name + "/*";
                     }
-
                     repoConfig.setString("remote", name, "url", urls[i]);
-                    repoConfig.setString("remote", name, "fetch", refs[i]);
+                    repoConfig.setString("remote", name, "fetch", refSpecs[i]);
                 }
             }
-
             try {
                 repoConfig.save();
                 remoteRepositories = RemoteConfig.getAllRemoteConfigs(repoConfig);
             } catch (Exception e) {
-                throw new GitException("Error creating repositories", e);
+                throw new GitException(hudson.plugins.git.Messages.GitSCM_Repository_CreationExceptionMsg(), e);
             }
             return remoteRepositories;
         }
 
-        public static List<BranchSpec> createBranches(String[] branch) {
+        /**
+         * Creates git branches based.
+         *
+         * @param branchParams parameters.
+         * @return list pf {@link BranchSpec}.
+         */
+        public static List<BranchSpec> createBranches(String[] branchParams) {
             List<BranchSpec> branches = new ArrayList<BranchSpec>();
-            String[] branchData = branch;
-            for (int i = 0; i < branchData.length; i++) {
-                branches.add(new BranchSpec(branchData[i]));
-            }
-
-            if (branches.size() == 0) {
-                branches.add(new BranchSpec("*/master"));
+            if (ArrayUtils.isEmpty(branchParams)) {
+                branches.add(new BranchSpec(DEFAULT_BRANCH));
+            } else {
+                for (String branchParam : branchParams) {
+                    branches.add(new BranchSpec(branchParam));
+                }
             }
             return branches;
         }
@@ -1148,7 +1172,7 @@ public class GitSCM extends SCM implements Serializable {
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest req, JSONObject formData) throws Descriptor.FormException {
             req.bindJSON(this, formData);
             save();
             return true;

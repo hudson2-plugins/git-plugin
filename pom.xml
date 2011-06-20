@@ -22,6 +22,17 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <compileSource>1.6</compileSource>
+        <maven-surefire-plugin.version>2.8.1</maven-surefire-plugin.version>
+        <maven-pmd-plugin.version>2.5</maven-pmd-plugin.version>
+        <maven-gpg-plugin.version>1.2</maven-gpg-plugin.version>
+        <easymock.version>3.0</easymock.version>
+        <mockito.version>1.8.5</mockito.version>
+    </properties>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -43,7 +54,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.8.1</version>
+                <version>${maven-surefire-plugin.version}</version>
                 <configuration>
                     <workingDirectory>${project.build.directory}</workingDirectory>
                     <forkMode>always</forkMode>
@@ -59,7 +70,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>2.5</version>
+                <version>${maven-pmd-plugin.version}</version>
                 <configuration>
                     <verbose>true</verbose>
                     <targetJdk>${compileSource}</targetJdk>
@@ -81,12 +92,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <compileSource>1.6</compileSource>
-    </properties>
 
     <repositories>
         <repository>
@@ -126,12 +131,6 @@
             <version>0.4-47e4af3</version>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
             <version>0.5.1.51-g96b2e76</version>
@@ -145,8 +144,14 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
-            <version>1.8.5</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <scope>test</scope>
+            <version>${easymock.version}</version>
         </dependency>
 
         <dependency><!-- we contribute AbstractBuildParameters for Git if it's available -->
@@ -190,7 +195,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.2</version>
+                        <version>${maven-gpg-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
