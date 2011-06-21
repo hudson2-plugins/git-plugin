@@ -81,6 +81,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.spearce.jgit.lib.ObjectId;
@@ -1044,10 +1045,12 @@ public class GitSCM extends SCM implements Serializable {
         public static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] repoNames,
                                                                         String[] refSpecs)
             throws IOException, FormException {
-            if (GitUtils.isEmpty(urls)) {
-                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
-                    "git.repo.url");
-            }
+            //TODO return back when the reason of "hudson.SystemQuietingDownGlobalMessage@6bae60c5" error
+            // will be discovered
+//            if (GitUtils.isEmpty(urls)) {
+//                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
+//                    "git.repo.url");
+//            }
 
             File temp = File.createTempFile("tmp", "config");
             try {
@@ -1061,27 +1064,29 @@ public class GitSCM extends SCM implements Serializable {
          * @deprecated Use {@link #createRepositoryConfigurations(String[], String[], String[])}
          */
         private static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] names,
-                                                                        String[] refSpecs, File temp) {
-            List<RemoteConfig> remoteRepositories;
-            RepositoryConfig repoConfig = new RepositoryConfig(null, temp);
-            // Make up a repo config from the request parameters
-            names = GitUtils.fixupNames(names, urls);
-            if (names != null) {
-                for (int i = 0; i < names.length; i++) {
-                    String name = names[i];
-                    name = name.replace(' ', '_');
-                    if (StringUtils.isEmpty(refSpecs[i])) {
-                        refSpecs[i] = "+refs/heads/*:refs/remotes/" + name + "/*";
+                                                                         String[] refSpecs, File temp) {
+            List<RemoteConfig> remoteRepositories = new ArrayList<RemoteConfig>();
+            if (!GitUtils.isEmpty(urls)) {
+                RepositoryConfig repoConfig = new RepositoryConfig(null, temp);
+                // Make up a repo config from the request parameters
+                names = GitUtils.fixupNames(names, urls);
+                if (names != null) {
+                    for (int i = 0; i < names.length; i++) {
+                        String name = names[i];
+                        name = name.replace(' ', '_');
+                        if (StringUtils.isEmpty(refSpecs[i])) {
+                            refSpecs[i] = "+refs/heads/*:refs/remotes/" + name + "/*";
+                        }
+                        repoConfig.setString("remote", name, "url", urls[i]);
+                        repoConfig.setString("remote", name, "fetch", refSpecs[i]);
                     }
-                    repoConfig.setString("remote", name, "url", urls[i]);
-                    repoConfig.setString("remote", name, "fetch", refSpecs[i]);
                 }
-            }
-            try {
-                repoConfig.save();
-                remoteRepositories = RemoteConfig.getAllRemoteConfigs(repoConfig);
-            } catch (Exception e) {
-                throw new GitException(hudson.plugins.git.Messages.GitSCM_Repository_CreationExceptionMsg(), e);
+                try {
+                    repoConfig.save();
+                    remoteRepositories = RemoteConfig.getAllRemoteConfigs(repoConfig);
+                } catch (Exception e) {
+                    throw new GitException(hudson.plugins.git.Messages.GitSCM_Repository_CreationExceptionMsg(), e);
+                }
             }
             return remoteRepositories;
         }
@@ -1176,6 +1181,38 @@ public class GitSCM extends SCM implements Serializable {
             req.bindJSON(this, formData);
             save();
             return true;
+        }
+
+        /**
+         * Validates the remote repository URL.
+         *
+         * @param value value to validate.
+         * @return {@link FormValidation}.
+         * @throws java.io.IOException            IOException.
+         * @throws javax.servlet.ServletException ServletException.
+         */
+        public FormValidation doCheckRepositoryUrl(@QueryParameter String value)
+            throws IOException, ServletException {
+            if (StringUtils.isEmpty(value)) {
+                return FormValidation.error(
+                    hudson.plugins.git.Messages.GitSCM_Repository_IncorrectRepositoryFormatMsg());
+            }
+            File temp = File.createTempFile("validation.tmp", "config");
+            try {
+                RepositoryConfig repoConfig = new RepositoryConfig(null, temp);
+                repoConfig.setString("remote", GitUtils.DEFAULD_REPO_NAME, "url", value);
+                try {
+                    repoConfig.save();
+                    RemoteConfig.getAllRemoteConfigs(repoConfig);
+                } catch (Exception e) {
+                    return FormValidation.error(
+                        hudson.plugins.git.Messages.GitSCM_Repository_IncorrectRepositoryFormatMsg() + ": "
+                            + e.getMessage());
+                }
+            } finally {
+                temp.delete();
+            }
+            return FormValidation.ok();
         }
 
     }

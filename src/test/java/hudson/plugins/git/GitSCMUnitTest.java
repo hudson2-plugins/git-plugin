@@ -25,24 +25,29 @@ package hudson.plugins.git;
 
 import hudson.model.Descriptor;
 import java.io.IOException;
+import java.util.List;
 import org.junit.Test;
+import org.spearce.jgit.transport.RemoteConfig;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit tests for {@link hudson.plugins.git.GitSCM}.
  */
 public class GitSCMUnitTest{
 
-    @Test(expected = Descriptor.FormException.class)
+    @Test
     public void testCreateRepositoryConfigurationsEmptyUrls() throws Descriptor.FormException, IOException {
-        GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{},
+        List<RemoteConfig> configs = GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{},
             new String[]{}, new String[]{});
+        assertTrue(configs.isEmpty());
     }
 
-    @Test(expected = Descriptor.FormException.class)
+    @Test
     public void testCreateRepositoryConfigurationsEmptyUrls2() throws Descriptor.FormException, IOException {
-        String[] urls = new String[]{""};
-        GitSCM.DescriptorImpl.createRepositoryConfigurations(urls,
+        List<RemoteConfig> configs = GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{""},
             new String[]{}, new String[]{});
+        assertTrue(configs.isEmpty());
     }
 }
 
