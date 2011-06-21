@@ -31,7 +31,8 @@ import org.apache.commons.lang.StringUtils;
 import org.spearce.jgit.lib.ObjectId;
 
 public class GitUtils {
-    private static final String DEFAULD_REPO_NAME = "origin";
+
+    public static final String DEFAULD_REPO_NAME = "origin";
 
     IGitAPI git;
     TaskListener listener;

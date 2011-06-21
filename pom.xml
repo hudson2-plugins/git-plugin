@@ -15,6 +15,7 @@
     <name>Hudson GIT plugin</name>
     <description>Integrates Hudson with GIT SCM</description>
     <url>http://wiki.hudson-ci.org/display/HUDSON/Git+Plugin</url>
+
     <licenses>
         <license>
             <name>The MIT license</name>
@@ -22,6 +23,7 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
