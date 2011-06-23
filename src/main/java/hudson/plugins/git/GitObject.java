@@ -25,9 +25,9 @@
 package hudson.plugins.git;
 
 import java.io.Serializable;
+import org.eclipse.jgit.lib.ObjectId;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
-import org.spearce.jgit.lib.ObjectId;
 
 @ExportedBean(defaultVisibility = 999)
 public class GitObject implements Serializable {

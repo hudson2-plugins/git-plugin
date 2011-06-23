@@ -24,7 +24,7 @@
 
 package hudson.plugins.git;
 
-import org.spearce.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectId;
 
 public class Tag extends GitObject {
     private static final long serialVersionUID = 1L;

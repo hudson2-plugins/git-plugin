@@ -25,7 +25,7 @@ package hudson.plugins.git;
 
 import hudson.model.InvisibleAction;
 import java.io.Serializable;
-import org.spearce.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectId;
 
 /**
  * Used as a build parameter to specify the revision to be built.

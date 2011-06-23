@@ -52,10 +52,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.spearce.jgit.transport.RemoteConfig;
 
 public class GitPublisher extends Recorder implements Serializable, MatrixAggregatable {
     private static final long serialVersionUID = 1L;
