@@ -1045,12 +1045,10 @@ public class GitSCM extends SCM implements Serializable {
         public static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] repoNames,
                                                                         String[] refSpecs)
             throws IOException, FormException {
-            //TODO return back when the reason of "hudson.SystemQuietingDownGlobalMessage@6bae60c5" error
-            // will be discovered
-//            if (GitUtils.isEmpty(urls)) {
-//                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
-//                    "git.repo.url");
-//            }
+            if (GitUtils.isEmpty(urls)) {
+                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
+                    "git.repo.url");
+            }
 
             File temp = File.createTempFile("tmp", "config");
             try {
