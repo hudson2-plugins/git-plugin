@@ -8,18 +8,13 @@ import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
 import hudson.scm.browsers.QueryBuilder;
 import hudson.util.FormValidation;
-import hudson.util.FormValidation.URLCheck;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-
 import javax.servlet.ServletException;
-
 import net.sf.json.JSONObject;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -39,8 +34,8 @@ public class ViewGitWeb extends GitRepositoryBrowser {
     @Override
     public URL getDiffLink(Path path) throws IOException {
         if (path.getEditType() == EditType.EDIT) {
-        	String spec = buildCommitDiffSpec(path);
-        	return new URL(url, url.getPath() + spec);            
+            String spec = buildCommitDiffSpec(path);
+            return new URL(url, url.getPath() + spec);
         }
         return null;
     }
@@ -49,20 +44,26 @@ public class ViewGitWeb extends GitRepositoryBrowser {
     public URL getFileLink(Path path) throws IOException {
         if (path.getEditType() == EditType.DELETE) {
             String spec = buildCommitDiffSpec(path);
-            return new URL(url, url.getPath() + spec);            
+            return new URL(url, url.getPath() + spec);
         }
-        String spec = param().add("p=" + projectName).add("a=viewblob").add("h=" + path.getSrc()).add("f=" +  path.getPath()).toString();
+        String spec = param().add("p=" + projectName)
+            .add("a=viewblob")
+            .add("h=" + path.getSrc())
+            .add("f=" + path.getPath())
+            .toString();
         return new URL(url, url.getPath() + spec);
     }
 
-	private String buildCommitDiffSpec(Path path)
-			throws UnsupportedEncodingException {
-		return param().add("p=" + projectName).add("a=commitdiff").add("h=" + path.getChangeSet().getId()).toString() + "#" +  URLEncoder.encode(path.getPath(),"UTF-8").toString();
-	}
+    private String buildCommitDiffSpec(Path path)
+        throws UnsupportedEncodingException {
+        return param().add("p=" + projectName).add("a=commitdiff").add("h=" + path.getChangeSet().getId()).toString()
+            + "#" + URLEncoder.encode(path.getPath(), "UTF-8").toString();
+    }
 
     @Override
     public URL getChangeSetLink(GitChangeSet changeSet) throws IOException {
-        return new URL(url, url.getPath() + param().add("p=" + projectName).add("a=commit").add("h=" + changeSet.getId()).toString());
+        return new URL(url,
+            url.getPath() + param().add("p=" + projectName).add("a=commit").add("h=" + changeSet.getId()).toString());
     }
 
     private QueryBuilder param() {
@@ -88,26 +89,9 @@ public class ViewGitWeb extends GitRepositoryBrowser {
             return req.bindParameters(ViewGitWeb.class, "viewgit.");
         }
 
-        public FormValidation doCheckUrl(@QueryParameter(fixEmpty = true) final String url) throws IOException, ServletException {
-            if (url == null) // nothing entered yet
-                return FormValidation.ok();
-            return new URLCheck() {
-                protected FormValidation check() throws IOException, ServletException {
-                    String v = url;
-                    if (!v.endsWith("/"))
-                        v += '/';
-
-                    try {
-                        if (findText(open(new URL(v)), "ViewGit")) {
-                            return FormValidation.ok();
-                        } else {
-                            return FormValidation.error("This is a valid URL but it doesn't look like ViewGit");
-                        }
-                    } catch (IOException e) {
-                        return handleIOException(v, e);
-                    }
-                }
-            }.check();
+        public FormValidation doCheckUrl(@QueryParameter(fixEmpty = true) final String url)
+            throws IOException, ServletException {
+            return new GitUrlChecker(url, "ViewGit").check();
         }
     }
 }
