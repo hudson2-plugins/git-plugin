@@ -14,7 +14,7 @@
     <packaging>hpi</packaging>
     <name>Hudson GIT plugin</name>
     <description>Integrates Hudson with GIT SCM</description>
-    <http://wiki.hudson-ci.org/display/HUDSON/Git+Plugin</url>
+    <url>http://wiki.hudson-ci.org/display/HUDSON/Git+Plugin</url>
 
     <licenses>
         <license>
