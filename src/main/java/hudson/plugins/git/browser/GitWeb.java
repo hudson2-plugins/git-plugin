@@ -31,11 +31,14 @@ import hudson.plugins.git.GitChangeSet.Path;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
 import hudson.scm.browsers.QueryBuilder;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -108,8 +111,13 @@ public class GitWeb extends GitRepositoryBrowser {
         }
 
         @Override
-        public GitWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws FormException {
+        public GitWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws Descriptor.FormException {
             return req.bindParameters(GitWeb.class, "gitweb.");
+        }
+
+        public FormValidation doCheckUrl(@QueryParameter(fixEmpty = true) final String url)
+            throws IOException, ServletException {
+            return new GitUrlChecker(url, "gitweb").check();
         }
     }
 

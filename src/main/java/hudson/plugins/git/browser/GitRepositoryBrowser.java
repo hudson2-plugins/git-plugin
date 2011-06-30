@@ -26,8 +26,10 @@ package hudson.plugins.git.browser;
 
 import hudson.plugins.git.GitChangeSet;
 import hudson.scm.RepositoryBrowser;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.net.URL;
+import javax.servlet.ServletException;
 
 public abstract class GitRepositoryBrowser extends RepositoryBrowser<GitChangeSet> {
     /**
@@ -51,4 +53,35 @@ public abstract class GitRepositoryBrowser extends RepositoryBrowser<GitChangeSe
     public abstract URL getFileLink(GitChangeSet.Path path) throws IOException;
 
     private static final long serialVersionUID = 1L;
+
+    protected static class GitUrlChecker extends FormValidation.URLCheck {
+
+        private String url;
+        private String browserName;
+
+        public GitUrlChecker(String url, String gitBrowserName) {
+            this.url = url;
+            this.browserName = gitBrowserName;
+        }
+
+        @Override
+        protected FormValidation check() throws IOException, ServletException {
+            if (null == url) {
+                return FormValidation.ok();
+            }
+            String v = url;
+            if (!v.endsWith("/")) {
+                v += '/';
+            }
+            try {
+                if (findText(open(new URL(v)), browserName)) {
+                    return FormValidation.ok();
+                } else {
+                    return FormValidation.error("This is a valid URL but it doesn't look like " + browserName);
+                }
+            } catch (IOException e) {
+                return handleIOException(v, e);
+            }
+        }
+    }
 }

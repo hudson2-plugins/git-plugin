@@ -30,11 +30,14 @@ import hudson.plugins.git.GitChangeSet;
 import hudson.plugins.git.GitChangeSet.Path;
 import hudson.scm.EditType;
 import hudson.scm.RepositoryBrowser;
+import hudson.util.FormValidation;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
@@ -113,8 +116,13 @@ public class RedmineWeb extends GitRepositoryBrowser {
         }
 
         @Override
-        public RedmineWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws FormException {
+        public RedmineWeb newInstance(StaplerRequest req, JSONObject jsonObject) throws Descriptor.FormException {
             return req.bindParameters(RedmineWeb.class, "redmineweb.");
+        }
+
+        public FormValidation doCheckUrl(@QueryParameter(fixEmpty = true) final String url)
+            throws IOException, ServletException {
+            return new GitUrlChecker(url, "redmine").check();
         }
     }
 
