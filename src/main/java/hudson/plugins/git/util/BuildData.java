@@ -33,9 +33,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import org.eclipse.jgit.lib.ObjectId;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
-import org.spearce.jgit.lib.ObjectId;
 
 import static hudson.Util.fixNull;
 

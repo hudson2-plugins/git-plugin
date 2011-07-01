@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ * Copyright (c) 2011, Oracle Corporation, Nikita Levyankov
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,33 +21,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+package hudson.plugins.git.converter;
 
-package hudson.plugins.git;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 
+/**
+ * This interface is used for legacy classes conversion
+ * <p/>
+ * Date: 7/1/11
+ *
+ * @author Nikita Levyankov
+ */
+public interface LegacyConverter<T> {
+    /**
+     * Is the current reader node a legacy node?
+     *
+     * @param reader HierarchicalStreamReader.
+     * @param context UnmarshallingContext.
+     * @return true if legacy, false otherwise
+     */
+    boolean isLegacyNode(HierarchicalStreamReader reader, UnmarshallingContext context);
 
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Ref;
-
-public class Branch extends GitObject {
-    private static final long serialVersionUID = 1L;
-
-    public Branch(String name, ObjectId sha1) {
-        super(name, sha1);
-        // TODO Auto-generated constructor stub
-    }
-
-    public Branch(Ref candidate) {
-        super(strip(candidate.getName()), candidate.getObjectId());
-    }
-
-    private static String strip(String name) {
-        return name.substring(name.indexOf('/', 5) + 1);
-    }
-
-    public
-    @Override
-    String toString() {
-        return "Branch " + name + "(" + sha1 + ")";
-    }
-
+    /**
+     * Unmarshall legacy object.
+     *
+     * @param reader HierarchicalStreamReader.
+     * @param context UnmarshallingContext.
+     * @return unmarshalled object of specified type
+     */
+    T legacyUnmarshal(HierarchicalStreamReader reader, UnmarshallingContext context);
 }

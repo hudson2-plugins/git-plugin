@@ -38,8 +38,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
+import org.eclipse.jgit.lib.ObjectId;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.spearce.jgit.lib.ObjectId;
 
 import static java.util.Collections.emptyList;
 

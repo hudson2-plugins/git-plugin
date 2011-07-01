@@ -50,12 +50,12 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang.StringUtils;
-import org.spearce.jgit.lib.Constants;
-import org.spearce.jgit.lib.ObjectId;
-import org.spearce.jgit.lib.Ref;
-import org.spearce.jgit.lib.Repository;
-import org.spearce.jgit.lib.Tag;
-import org.spearce.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.transport.RemoteConfig;
 
 public class GitAPI implements IGitAPI {
     private static final Logger LOGGER = Logger.getLogger(GitAPI.class.getName());
@@ -95,7 +95,7 @@ public class GitAPI implements IGitAPI {
             throw new GitException(".git directory already exists! Has it already been initialised?");
         }
         try {
-            final Repository repo = new Repository(new File(workspace.child(".git").getRemote()));
+            final Repository repo = new FileRepository(new File(workspace.child(".git").getRemote()));
             repo.create();
         } catch (IOException ioe) {
             throw new GitException("Error initiating git repo.", ioe);
@@ -142,7 +142,7 @@ public class GitAPI implements IGitAPI {
         List<IndexEntry> submodules = lsTree(treeIsh);
 
         // Remove anything that isn't a submodule
-        for (Iterator<IndexEntry> it = submodules.iterator(); it.hasNext();) {
+        for (Iterator<IndexEntry> it = submodules.iterator(); it.hasNext(); ) {
             if (!it.next().getMode().equals("160000")) {
                 it.remove();
             }
@@ -946,22 +946,22 @@ public class GitAPI implements IGitAPI {
     }
 
     private Repository getRepository() throws IOException {
-        return new Repository(new File(workspace.getRemote(), ".git"));
+        return new FileRepository(new File(workspace.getRemote(), ".git"));
     }
 
     public List<Tag> getTagsOnCommit(String revName) throws GitException, IOException {
         Repository db = getRepository();
         ObjectId commit = db.resolve(revName);
-        List<Tag> ret = new ArrayList<Tag>();
-
-        for (final Map.Entry<String, Ref> tag : db.getTags().entrySet()) {
-
-            Tag ttag = db.mapTag(tag.getKey());
-            if (ttag.getObjId().equals(commit)) {
-                ret.add(ttag);
+        List<Tag> result = new ArrayList<Tag>();
+        if (null != commit) {
+            for (final Map.Entry<String, Ref> tag : db.getTags().entrySet()) {
+                Ref ref = tag.getValue();
+                if (ref.getObjectId().equals(commit)) {
+                    result.add(new Tag(tag.getKey(), ref.getObjectId()));
+                }
             }
         }
-        return ret;
+        return result;
 
     }
 
