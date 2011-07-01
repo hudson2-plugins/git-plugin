@@ -37,6 +37,7 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.model.Items;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
@@ -45,6 +46,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.plugins.git.browser.GitRepositoryBrowser;
 import hudson.plugins.git.browser.GitWeb;
+import hudson.plugins.git.converter.ObjectIdConverter;
+import hudson.plugins.git.converter.RemoteConfigConverter;
 import hudson.plugins.git.opt.PreBuildMergeOptions;
 import hudson.plugins.git.util.Build;
 import hudson.plugins.git.util.BuildChooser;
@@ -928,7 +931,19 @@ public class GitSCM extends SCM implements Serializable {
 
         public DescriptorImpl() {
             super(GitSCM.class, GitRepositoryBrowser.class);
+            beforeLoad();
             load();
+        }
+
+        /**
+         * Registering legacy converters and aliases for backward compatibility with org.spearce.jgit library
+         */
+        private void beforeLoad() {
+            Items.XSTREAM.alias("org.spearce.jgit.transport.RemoteConfig", RemoteConfig.class);
+            Items.XSTREAM.alias("org.eclipse.jgit.lib.ObjectId", ObjectId.class);
+            Items.XSTREAM.registerConverter(new RemoteConfigConverter(Items.XSTREAM.getMapper(),
+                Items.XSTREAM.getReflectionProvider()));
+            Run.XSTREAM.registerConverter(new ObjectIdConverter());
         }
 
         public String getDisplayName() {
