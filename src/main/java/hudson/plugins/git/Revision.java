@@ -26,9 +26,9 @@ package hudson.plugins.git;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import org.eclipse.jgit.lib.ObjectId;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
-import org.spearce.jgit.lib.ObjectId;
 
 /**
  * A Revision is a SHA1 in the object tree, and the collection of branches

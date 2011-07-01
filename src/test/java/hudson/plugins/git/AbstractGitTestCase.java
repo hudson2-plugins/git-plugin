@@ -27,14 +27,17 @@ package hudson.plugins.git;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Descriptor;
+import hudson.model.Hudson;
 import hudson.model.TaskListener;
 import hudson.util.StreamTaskListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.jvnet.hudson.test.HudsonTestCase;
-import org.spearce.jgit.lib.PersonIdent;
-import org.spearce.jgit.transport.RemoteConfig;
+import org.jvnet.hudson.test.TestPluginManager;
+import org.jvnet.hudson.test.recipes.Recipe;
 
 /**
  * Base test case for Git related stuff.
@@ -53,6 +56,7 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
 
     @Override
     protected void setUp() throws Exception {
+        System.setProperty("hudson.PluginStrategy", "hudson.ClassicPluginStrategy");
         super.setUp();
         workDir = createTmpDir();
         listener = new StreamTaskListener();
