@@ -939,10 +939,11 @@ public class GitSCM extends SCM implements Serializable {
          * Registering legacy converters and aliases for backward compatibility with org.spearce.jgit library
          */
         private void beforeLoad() {
-            Items.XSTREAM.alias("org.spearce.jgit.transport.RemoteConfig", RemoteConfig.class);
-            Items.XSTREAM.alias("org.eclipse.jgit.lib.ObjectId", ObjectId.class);
-            Items.XSTREAM.registerConverter(new RemoteConfigConverter(Items.XSTREAM.getMapper(),
-                Items.XSTREAM.getReflectionProvider()));
+            Items.XSTREAM.alias("ObjectId", ObjectId.class);
+            Items.XSTREAM.alias("RemoteConfig", RemoteConfig.class);
+            Items.XSTREAM.alias("RemoteConfig", org.spearce.jgit.transport.RemoteConfig.class);
+            Items.XSTREAM.registerConverter(
+                new RemoteConfigConverter(Items.XSTREAM.getMapper(), Items.XSTREAM.getReflectionProvider()));
             Run.XSTREAM.registerConverter(new ObjectIdConverter());
         }
 
