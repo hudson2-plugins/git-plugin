@@ -65,7 +65,6 @@ public class ObjectIdConverterTest {
     @Test
     public void testLegacyUnmarshall() throws Exception {
         XStream XSTREAM = initXStream();
-        XSTREAM.alias("org.eclipse.jgit.lib.ObjectId", ObjectId.class);
         XSTREAM.registerConverter(new ObjectIdConverter());
         getSourceConfigFile(XSTREAM).read();
     }
@@ -73,13 +72,12 @@ public class ObjectIdConverterTest {
     @Test
     public void testMarshall() throws Exception {
         XStream XSTREAM = initXStream();
-        XSTREAM.alias("org.eclipse.jgit.lib.ObjectId", ObjectId.class);
         XSTREAM.registerConverter(new ObjectIdConverter());
         //read object from config
         Object item = getSourceConfigFile(XSTREAM).read();
         //save to new config file
         getTargetConfigFile(XSTREAM).write(item);
-        getSourceConfigFile(XSTREAM).read();
+        getTargetConfigFile(XSTREAM).read();
     }
 
     private XStream initXStream() {

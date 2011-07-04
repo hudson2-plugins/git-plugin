@@ -56,18 +56,12 @@ public class RemoteConfigConverterTest {
         FileUtils.copyFile(sourceConfigFile, targetConfigFile);
     }
 
-    @Test(expected = Exception.class)
-    public void testFailedUnmarshall() throws Exception {
-        XStream XSTREAM = initXStream();
-        //Config contains legacy RemoteConfig class. Should fail without custom converter
-        getSourceConfigFile(XSTREAM).read();
-    }
-
     @Test
     public void testLegacyUnmarshall() throws Exception {
         XStream XSTREAM = initXStream();
         //Config contains legacy RemoteConfig class. Register custom converter and alias
-        XSTREAM.alias("org.spearce.jgit.transport.RemoteConfig", RemoteConfig.class);
+        XSTREAM.alias("RemoteConfig", RemoteConfig.class);
+        XSTREAM.alias("RemoteConfig", org.spearce.jgit.transport.RemoteConfig.class);
         XSTREAM.registerConverter(new RemoteConfigConverter(XSTREAM.getMapper(), XSTREAM.getReflectionProvider()));
         getSourceConfigFile(XSTREAM).read();
     }
@@ -75,13 +69,14 @@ public class RemoteConfigConverterTest {
     @Test
     public void testMarshall() throws Exception {
         XStream XSTREAM = initXStream();
-        XSTREAM.alias("org.spearce.jgit.transport.RemoteConfig", RemoteConfig.class);
+        XSTREAM.alias("RemoteConfig", RemoteConfig.class);
+        XSTREAM.alias("RemoteConfig", org.spearce.jgit.transport.RemoteConfig.class);
         XSTREAM.registerConverter(new RemoteConfigConverter(XSTREAM.getMapper(), XSTREAM.getReflectionProvider()));
         //read object from config
         Object item = getSourceConfigFile(XSTREAM).read();
         //save to new config file
         getTargetConfigFile(XSTREAM).write(item);
-        getSourceConfigFile(XSTREAM).read();
+        getTargetConfigFile(XSTREAM).read();
     }
 
     private XmlFile getSourceConfigFile(XStream XSTREAM) {

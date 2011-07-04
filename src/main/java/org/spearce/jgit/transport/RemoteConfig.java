@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hudson.plugins.git.converter;
+package org.spearce.jgit.transport;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,16 +34,15 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections.CollectionUtils;
 import org.eclipse.jgit.lib.Config;
-import org.eclipse.jgit.transport.RemoteConfig;
 
 /**
  * Class is used as legacy RemoteConfig for backward compatibility with org.spearce.jgit library
  * <p/>
- * Date: 7/1/11
+ * Date: 7/4/11
  *
  * @author Nikita Levyankov
  */
-class LegacyRemoteConfig extends Config implements Externalizable {
+public class RemoteConfig extends Config implements Externalizable {
     private static final String KEY_URL = "url";
     private static final String KEY_FETCH = "fetch";
     private static final String KEY_PUSH = "push";
@@ -63,7 +62,7 @@ class LegacyRemoteConfig extends Config implements Externalizable {
     /**
      * Create remote config proxy
      */
-    public LegacyRemoteConfig() {
+    public RemoteConfig() {
         stringsMap.put(KEY_RECEIVE_PACK, receivepack);
         stringsMap.put(KEY_UPLOAD_PACK, uploadpack);
         stringsMap.put(KEY_TAG_OPT, tagopt);
@@ -164,10 +163,9 @@ class LegacyRemoteConfig extends Config implements Externalizable {
 
     /**
      * @return RemoteConfig
-     * @throws URISyntaxException if any.
+     * @throws java.net.URISyntaxException if any.
      */
-    public RemoteConfig toRemote() throws URISyntaxException {
-        return new RemoteConfig(this, name);
+    public org.eclipse.jgit.transport.RemoteConfig toRemote() throws URISyntaxException {
+        return new org.eclipse.jgit.transport.RemoteConfig(this, name);
     }
-
 }
