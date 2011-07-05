@@ -26,11 +26,11 @@ package hudson.plugins.git.converter;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.converters.reflection.ReflectionProvider;
-import com.thoughtworks.xstream.converters.reflection.SerializableConverter;
 import com.thoughtworks.xstream.core.util.CustomObjectInputStream;
 import com.thoughtworks.xstream.core.util.HierarchicalStreams;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.mapper.Mapper;
+import hudson.util.RobustReflectionConverter;
 import java.io.NotActiveException;
 import java.io.ObjectInputValidation;
 import java.util.Map;
@@ -43,14 +43,14 @@ import org.eclipse.jgit.transport.RemoteConfig;
  *
  * @author Nikita Levyankov
  */
-public class RemoteConfigConverter extends SerializableConverter implements LegacyConverter<RemoteConfig> {
+public class RemoteConfigConverter extends RobustReflectionConverter implements LegacyConverter<RemoteConfig> {
 
     public RemoteConfigConverter(Mapper mapper, ReflectionProvider provider) {
         super(mapper, provider);
     }
 
     public boolean canConvert(Class type) {
-        return RemoteConfig.class == type;
+        return RemoteConfig.class == type || org.spearce.jgit.transport.RemoteConfig.class == type;
     }
 
     /**
@@ -64,7 +64,7 @@ public class RemoteConfigConverter extends SerializableConverter implements Lega
      * {@inheritDoc}
      */
     public RemoteConfig legacyUnmarshal(final HierarchicalStreamReader reader, final UnmarshallingContext context) {
-        final LegacyRemoteConfig remoteConfig = new LegacyRemoteConfig();
+        final org.spearce.jgit.transport.RemoteConfig remoteConfig = new org.spearce.jgit.transport.RemoteConfig();
         CustomObjectInputStream.StreamCallback callback = new LegacyInputStreamCallback(reader, context, remoteConfig);
         try {
             CustomObjectInputStream objectInput = CustomObjectInputStream.getInstance(context, callback);
@@ -83,15 +83,20 @@ public class RemoteConfigConverter extends SerializableConverter implements Lega
         return super.unmarshal(reader, context);
     }
 
+    @Override
+    protected Object instantiateNewInstance(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        return reflectionProvider.newInstance(RemoteConfig.class);
+    }
+
     private class LegacyInputStreamCallback implements CustomObjectInputStream.StreamCallback {
 
         private HierarchicalStreamReader reader;
         private UnmarshallingContext context;
-        private LegacyRemoteConfig remoteConfig;
+        private org.spearce.jgit.transport.RemoteConfig remoteConfig;
 
         private LegacyInputStreamCallback(HierarchicalStreamReader reader,
                                           final UnmarshallingContext context,
-                                          LegacyRemoteConfig remoteConfig) {
+                                          org.spearce.jgit.transport.RemoteConfig remoteConfig) {
             this.reader = reader;
             this.context = context;
             this.remoteConfig = remoteConfig;
