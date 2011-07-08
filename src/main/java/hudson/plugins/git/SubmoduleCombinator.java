@@ -28,7 +28,6 @@ import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.git.util.GitUtils;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,7 +69,7 @@ public class SubmoduleCombinator {
 
         for (IndexEntry submodule : git.getSubmodules("HEAD")) {
             File subdir = new File(workspace, submodule.getFile());
-            IGitAPI subGit = new GitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
+            IGitAPI subGit = new JGitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
 
             GitUtils gu = new GitUtils(listener, subGit);
             Collection<Revision> items = gu.filterTipBranches(gu.getAllBranchRevisions());
@@ -194,28 +193,14 @@ public class SubmoduleCombinator {
         for (IndexEntry submodule : settings.keySet()) {
             Revision branch = settings.get(submodule);
             File subdir = new File(workspace, submodule.getFile());
-            IGitAPI subGit = new GitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
+            IGitAPI subGit = new JGitAPI(git.getGitExe(), new FilePath(subdir), listener, git.getEnvironment());
 
             subGit.checkout(branch.sha1.name());
             git.add(submodule.file);
 
         }
 
-        try {
-            File f = File.createTempFile("gitcommit", ".txt");
-            FileOutputStream fos = null;
-            try {
-                fos = new FileOutputStream(f);
-                fos.write(commit.getBytes());
-            } finally {
-                fos.close();
-            }
-            git.commit(f);
-            f.delete();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        git.commit(commit);
 
     }
 

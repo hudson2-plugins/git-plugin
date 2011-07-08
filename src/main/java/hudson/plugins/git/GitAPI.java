@@ -151,7 +151,7 @@ public class GitAPI implements IGitAPI {
     }
 
     public boolean hasGitModules(String treeIsh) throws GitException {
-        return hasGitModules() && (getSubmodules(treeIsh).size() > 0);
+        return hasGitModules() && !getSubmodules(treeIsh).isEmpty();
     }
 
     public void fetch(String repository, String refspec) throws GitException {
@@ -902,6 +902,14 @@ public class GitAPI implements IGitAPI {
         }
     }
 
+    public void commit(String message) throws GitException {
+        try {
+            launchCommand("commit", "-m", message);
+        } catch (GitException e) {
+            throw new GitException("Cannot commit " + message, e);
+        }
+    }
+
     public void commit(File f) throws GitException {
         try {
             launchCommand("commit", "-F", f.getAbsolutePath());
@@ -945,7 +953,7 @@ public class GitAPI implements IGitAPI {
         return launchCommand("log", "--all", "--pretty=format:'%H#%ct'", branch);
     }
 
-    private Repository getRepository() throws IOException {
+    protected Repository getRepository() throws IOException {
         return new FileRepository(new File(workspace.getRemote(), ".git"));
     }
 

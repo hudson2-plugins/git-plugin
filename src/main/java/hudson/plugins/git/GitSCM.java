@@ -84,6 +84,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -105,7 +106,7 @@ public class GitSCM extends SCM implements Serializable {
     public static final String GIT_COMMIT = "GIT_COMMIT";
 
     private static final long serialVersionUID = 1L;
-    static final String DEFAULT_BRANCH = "master";
+    static final String DEFAULT_BRANCH = Constants.MASTER;
 
     // old fields are left so that old config data can be read in, but
     // they are deprecated. transient so that they won't show up in XML
@@ -630,7 +631,7 @@ public class GitSCM extends SCM implements Serializable {
 
             public BuildConfig invoke(File localWorkspace, VirtualChannel channel)
                 throws IOException {
-                IGitAPI git = new GitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
+                IGitAPI git = new JGitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
 
                 // Straight compile-the-branch
                 listener.getLogger().println("Checking out " + revToBuild);
@@ -715,7 +716,7 @@ public class GitSCM extends SCM implements Serializable {
 
             public BuildConfig invoke(File localWorkspace, VirtualChannel channel)
                 throws IOException {
-                IGitAPI git = new GitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
+                IGitAPI git = new JGitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
 
                 // Do we need to merge this revision onto MergeTarget
 
@@ -791,7 +792,7 @@ public class GitSCM extends SCM implements Serializable {
                 FilePath ws = new FilePath(localWorkspace);
                 listener.getLogger()
                     .println("Checkout:" + ws.getName() + " / " + ws.getRemote() + " - " + ws.getChannel());
-                IGitAPI git = new GitAPI(gitExe, ws, listener, environment);
+                IGitAPI git = new JGitAPI(gitExe, ws, listener, environment);
 
                 if (wipeOutWorkspace) {
                     listener.getLogger().println("Wiping out workspace first.");
@@ -1349,7 +1350,7 @@ public class GitSCM extends SCM implements Serializable {
             private static final long serialVersionUID = 1L;
 
             public Boolean invoke(File localWorkspace, VirtualChannel channel) throws IOException {
-                IGitAPI git = new GitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
+                IGitAPI git = new JGitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
 
                 if (git.hasGitRepo()) {
                     // Repo is there - do a fetch
@@ -1544,7 +1545,7 @@ public class GitSCM extends SCM implements Serializable {
                         listener.getLogger().println(
                             "Trying to fetch " + submodule.getFile() + " into " + subdir);
 
-                        IGitAPI subGit = new GitAPI(git.getGitExe(),
+                        IGitAPI subGit = new JGitAPI(git.getGitExe(),
                             new FilePath(subdir),
                             listener, git.getEnvironment());
 
