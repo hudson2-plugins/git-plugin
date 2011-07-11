@@ -55,4 +55,32 @@ public class GitObject implements Serializable {
     public String getSHA1String() {
         return sha1.name();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GitObject gitObject = (GitObject) o;
+
+        if (name != null ? !name.equals(gitObject.name) : gitObject.name != null) {
+            return false;
+        }
+        if (sha1 != null ? !sha1.equals(gitObject.sha1) : gitObject.sha1 != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = sha1 != null ? sha1.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        return result;
+    }
 }

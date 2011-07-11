@@ -26,10 +26,10 @@ package hudson.plugins.git;
 
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.FilePath.FileCallable;
 import hudson.Launcher;
 import hudson.Launcher.LocalLauncher;
 import hudson.model.TaskListener;
+import hudson.plugins.git.util.GitConstants;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ArgumentListBuilder;
 import java.io.BufferedReader;
@@ -49,37 +49,69 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.util.FS;
 
 public class GitAPI implements IGitAPI {
     private static final Logger LOGGER = Logger.getLogger(GitAPI.class.getName());
-    Launcher launcher;
-    FilePath workspace;
-    TaskListener listener;
-    String gitExe;
-    EnvVars environment;
+    private Launcher launcher;
+    private FilePath workspace;
+    private TaskListener listener;
+    private String gitExe;
+    private EnvVars environment;
+    private Git jGitDelegate;
+    private PersonIdent author;
+    private PersonIdent committer;
 
-    public GitAPI(String gitExe, FilePath workspace,
-                  TaskListener listener, EnvVars environment) {
-
-        //listener.getLogger().println("Git API @ " + workspace.getName() + " / " + workspace.getRemote() + " - " + workspace.getChannel());
+    public GitAPI(String gitExe, FilePath workspace, TaskListener listener, EnvVars environment) {
 
         this.workspace = workspace;
         this.listener = listener;
         this.gitExe = gitExe;
         this.environment = environment;
-//        PrintStream log = listener.getLogger();
-        for (Map.Entry<String, String> ent : environment.entrySet()) {
-            //log.println("Env: " + ent.getKey() + "=" + ent.getValue());
-        }
-
         launcher = new LocalLauncher(GitSCM.VERBOSE ? listener : TaskListener.NULL);
+
+        if (hasGitRepo()) {//Wrap file repository if exists in order to perform operations and initialize jGitDelegate
+            try {
+                File gitDir = RepositoryCache.FileKey.resolve(new File(workspace.getRemote()), FS.DETECTED);
+                jGitDelegate = Git.wrap(new FileRepositoryBuilder().setGitDir(gitDir).build());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Returns author
+     *
+     * @return {@link PersonIdent}
+     */
+    protected PersonIdent getAuthor() {
+        return author;
+    }
+
+    /**
+     * Returns committer
+     *
+     * @return {@link PersonIdent}
+     */
+    protected PersonIdent getCommitter() {
+        return committer;
     }
 
     public String getGitExe() {
@@ -92,47 +124,33 @@ public class GitAPI implements IGitAPI {
 
     public void init() throws GitException {
         if (hasGitRepo()) {
-            throw new GitException(".git directory already exists! Has it already been initialised?");
+            throw new GitException(Messages.GitAPI_Repository_FailedInitTwiceMsg());
         }
-        try {
-            final Repository repo = new FileRepository(new File(workspace.child(".git").getRemote()));
-            repo.create();
-        } catch (IOException ioe) {
-            throw new GitException("Error initiating git repo.", ioe);
-        }
+        jGitDelegate = Git.init().setDirectory(new File(workspace.getRemote())).call();
     }
 
     public boolean hasGitRepo() throws GitException {
-        return hasGitRepo(".git");
+        return hasGitRepo(Constants.DOT_GIT);
     }
 
-    public boolean hasGitRepo(String GIT_DIR) throws GitException {
+    public boolean hasGitRepo(String gitDir) throws GitException {
         try {
-
-            FilePath dotGit = workspace.child(GIT_DIR);
-
+            FilePath dotGit = workspace.child(gitDir);
             return dotGit.exists();
-
         } catch (SecurityException ex) {
-            throw new GitException(
-                "Security error when trying to check for .git. Are you sure you have correct permissions?",
-                ex);
+            throw new GitException(Messages.GitAPI_Repository_SecurityFailureCheckMsg(), ex);
         } catch (Exception e) {
-            throw new GitException("Couldn't check for .git", e);
+            throw new GitException(Messages.GitAPI_Repository_FailedCheckMsg(), e);
         }
     }
 
     public boolean hasGitModules() throws GitException {
         try {
-
             FilePath dotGit = workspace.child(".gitmodules");
-
             return dotGit.exists();
-
         } catch (SecurityException ex) {
             throw new GitException(
-                "Security error when trying to check for .gitmodules. Are you sure you have correct permissions?",
-                ex);
+                "Security error when trying to check for .gitmodules. Are you sure you have correct permissions?", ex);
         } catch (Exception e) {
             throw new GitException("Couldn't check for .gitmodules", e);
         }
@@ -151,7 +169,7 @@ public class GitAPI implements IGitAPI {
     }
 
     public boolean hasGitModules(String treeIsh) throws GitException {
-        return hasGitModules() && (getSubmodules(treeIsh).size() > 0);
+        return hasGitModules() && !getSubmodules(treeIsh).isEmpty();
     }
 
     public void fetch(String repository, String refspec) throws GitException {
@@ -185,41 +203,41 @@ public class GitAPI implements IGitAPI {
      * @throws GitException if deleting or cloning the workspace fails
      */
     public void clone(final RemoteConfig remoteConfig) throws GitException {
-        listener.getLogger().println("Cloning repository " + remoteConfig.getName());
-
-        // TODO: Not here!
+        listener.getLogger().println(Messages.GitAPI_Repository_CloningRepositoryMsg(remoteConfig.getName()));
         try {
             workspace.deleteRecursive();
         } catch (Exception e) {
-            e.printStackTrace(listener.error("Failed to clean the workspace"));
-            throw new GitException("Failed to delete workspace", e);
+            e.printStackTrace(listener.error(Messages.GitAPI_Workspace_FailedCleanupMsg()));
+            throw new GitException(Messages.GitAPI_Workspace_FailedDeleteMsg(), e);
         }
 
         // Assume only 1 URL for this repository
-        final String source = remoteConfig.getURIs().get(0).toPrivateString();
+        final URIish source = remoteConfig.getURIs().get(0);
 
         try {
-            workspace.act(new FileCallable<String>() {
+            workspace.act(new FilePath.FileCallable<String>() {
 
                 private static final long serialVersionUID = 1L;
 
                 public String invoke(File workspace,
                                      VirtualChannel channel) throws IOException {
-                    final ArgumentListBuilder args = new ArgumentListBuilder();
-                    args.add("clone");
-                    args.add("-o", remoteConfig.getName());
-                    args.add(source);
-                    args.add(workspace.getAbsolutePath());
-                    return launchCommandIn(args, null);
+                    jGitDelegate = Git.cloneRepository()
+                        .setDirectory(workspace.getAbsoluteFile())
+                        .setURI(source.toPrivateString())
+                        .setRemote(remoteConfig.getName())
+                        .call();
+                    return Messages.GitAPI_Repository_CloneSuccessMsg(source.toPrivateString(),
+                        workspace.getAbsolutePath());
                 }
             });
         } catch (Exception e) {
-            throw new GitException("Could not clone " + source, e);
+            throw new GitException(Messages.GitAPI_Repository_FailedCloneMsg(source), e);
         }
     }
 
     public void clean() throws GitException {
-        launchCommand("clean", "-fdx");
+        verifyGitRepository();
+        jGitDelegate.clean().call();
     }
 
     public ObjectId revParse(String revName) throws GitException {
@@ -482,7 +500,7 @@ public class GitAPI implements IGitAPI {
      * @throws GitException if executing the git command fails
      */
     public String getDefaultRemote() throws GitException {
-        return getDefaultRemote("origin");
+        return getDefaultRemote(Constants.DEFAULT_REMOTE_NAME);
     }
 
     /**
@@ -501,7 +519,7 @@ public class GitAPI implements IGitAPI {
      * @throws GitException
      */
     public boolean isBareRepository(String GIT_DIR) throws GitException {
-        String ret = null;
+        String ret;
         if ("".equals(GIT_DIR)) {
             ret = launchCommand("rev-parse", "--is-bare-repository");
         } else {
@@ -753,23 +771,15 @@ public class GitAPI implements IGitAPI {
     }
 
     public List<Branch> getBranches() throws GitException {
-        return parseBranches(launchCommand("branch", "-a"));
+        verifyGitRepository();
+        List<Ref> refList = jGitDelegate.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        return parseRefList(refList);
     }
 
     public List<Branch> getRemoteBranches() throws GitException, IOException {
-        Repository db = getRepository();
-        Map<String, Ref> refs = db.getAllRefs();
-        List<Branch> branches = new ArrayList<Branch>();
-
-        for (Ref candidate : refs.values()) {
-            if (candidate.getName().startsWith(Constants.R_REMOTES)) {
-                Branch buildBranch = new Branch(candidate);
-                listener.getLogger().println("Seen branch in repository " + buildBranch.getName());
-                branches.add(buildBranch);
-            }
-        }
-
-        return branches;
+        verifyGitRepository();
+        List<Ref> refList = jGitDelegate.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+        return parseRefList(refList);
     }
 
     public List<Branch> getBranchesContaining(String revspec)
@@ -782,38 +792,36 @@ public class GitAPI implements IGitAPI {
     }
 
     public void checkoutBranch(String branch, String commitish) throws GitException {
+        verifyGitRepository();
         try {
             // First, checkout to detached HEAD, so we can delete the branch.
             launchCommand("checkout", "-f", commitish);
 
-            if (branch != null) {
-                // Second, check to see if the branch actually exists, and then delete it if it does.
-                for (Branch b : getBranches()) {
-                    if (b.name.equals(branch)) {
-                        deleteBranch(branch);
-                    }
-                }
-                // Lastly, checkout the branch, creating it in the process, using commitish as the start point.
-                launchCommand("checkout", "-b", branch, commitish);
+            if (null != branch) {
+                jGitDelegate.checkout()
+                    .setForce(true)
+                    .setStartPoint(commitish)
+                    .setName(branch)
+                    .setCreateBranch(true)
+                    .call();
             }
-        } catch (GitException e) {
-            throw new GitException("Could not checkout " + branch + " with start point " + commitish, e);
+        } catch (GitAPIException e) {
+            throw new GitException(Messages.GitAPI_Branch_CheckoutErrorMsg(branch, commitish), e);
         }
     }
 
     public boolean tagExists(String tagName) throws GitException {
         tagName = tagName.replace(' ', '_');
-
         return launchCommand("tag", "-l", tagName).trim().equals(tagName);
     }
 
     public void deleteBranch(String name) throws GitException {
+        verifyGitRepository();
         try {
-            launchCommand("branch", "-D", name);
-        } catch (GitException e) {
-            throw new GitException("Could not delete branch " + name, e);
+            jGitDelegate.branchDelete().setBranchNames(name).call();
+        } catch (GitAPIException e) {
+            throw new GitException(Messages.GitAPI_Branch_DeleteErrorMsg(name), e);
         }
-
     }
 
     public void deleteTag(String tagName) throws GitException {
@@ -873,32 +881,44 @@ public class GitAPI implements IGitAPI {
     }
 
     public boolean isCommitInRepo(String sha1) {
+        RevWalk revWalk = new RevWalk(jGitDelegate.getRepository());
         try {
-            List<ObjectId> revs = revList(sha1);
-
-            if (revs.size() == 0) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch (GitException e) {
+            revWalk.parseCommit(ObjectId.fromString(sha1));
+        } catch (IOException e) {
             return false;
         }
+        return true;
     }
 
     public void add(String filePattern) throws GitException {
+        verifyGitRepository();
         try {
-            launchCommand("add", filePattern);
-        } catch (GitException e) {
-            throw new GitException("Cannot add " + filePattern, e);
+            jGitDelegate.add().addFilepattern(filePattern).call();
+        } catch (NoFilepatternException ex) {
+            throw new GitException(ex);
         }
     }
 
     public void branch(String name) throws GitException {
+        verifyGitRepository();
         try {
-            launchCommand("branch", name);
-        } catch (GitException e) {
-            throw new GitException("Cannot create branch " + name, e);
+            jGitDelegate.branchCreate().setName(name).call();
+        } catch (GitAPIException e) {
+            throw new GitException(Messages.GitAPI_Branch_CreateErrorMsg(name), e);
+        }
+    }
+
+    public void commit(String message) throws GitException {
+        verifyGitRepository();
+        parseEnvVars(getEnvironment());
+        try {
+            jGitDelegate.commit()
+                .setMessage(message)
+                .setAuthor(getAuthor())
+                .setCommitter(getCommitter())
+                .call();
+        } catch (Exception e) {
+            throw new GitException(Messages.GitAPI_Commit_FailedMsg(message), e);
         }
     }
 
@@ -945,8 +965,9 @@ public class GitAPI implements IGitAPI {
         return launchCommand("log", "--all", "--pretty=format:'%H#%ct'", branch);
     }
 
-    private Repository getRepository() throws IOException {
-        return new FileRepository(new File(workspace.getRemote(), ".git"));
+    protected Repository getRepository() throws IOException {
+        verifyGitRepository();
+        return jGitDelegate.getRepository();
     }
 
     public List<Tag> getTagsOnCommit(String revName) throws GitException, IOException {
@@ -983,5 +1004,59 @@ public class GitAPI implements IGitAPI {
         } catch (Exception e) {
             throw new GitException("Error retrieving tag names", e);
         }
+    }
+
+    private void verifyGitRepository() {
+        if (!hasGitRepo() || null == jGitDelegate) {
+            throw new GitException(Messages.GitAPI_Repository_InvalidStateMsg());
+        }
+    }
+
+    protected List<Branch> parseRefList(List<Ref> refList) {
+        List<Branch> result = new ArrayList<Branch>();
+        if (CollectionUtils.isNotEmpty(refList)) {
+            for (Ref ref : refList) {
+                Branch buildBranch = new Branch(ref);
+                result.add(buildBranch);
+                listener.getLogger().println(Messages.GitAPI_Branch_BranchInRepoMsg(buildBranch.getName()));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Check environment variables for authors and committers data. If name or email is not empty -
+     * instantiate author/commiter as {@link PersonIdent}
+     *
+     * @param envVars environment variables.
+     * @see hudson.plugins.git.util.GitConstants#GIT_AUTHOR_NAME_ENV_VAR
+     * @see hudson.plugins.git.util.GitConstants#GIT_AUTHOR_EMAIL_ENV_VAR
+     * @see hudson.plugins.git.util.GitConstants#GIT_COMMITTER_NAME_ENV_VAR
+     * @see hudson.plugins.git.util.GitConstants#GIT_COMMITTER_EMAIL_ENV_VAR
+     */
+    protected void parseEnvVars(EnvVars envVars) {
+        author = buildPersonIdent(envVars, GitConstants.GIT_AUTHOR_NAME_ENV_VAR, GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR);
+        committer = buildPersonIdent(envVars, GitConstants.GIT_COMMITTER_NAME_ENV_VAR,
+            GitConstants.GIT_COMMITTER_EMAIL_ENV_VAR);
+    }
+
+    /**
+     * Create person from environment vars by name key and email key.
+     *
+     * @param envVars EnvVars.
+     * @param nameEnvKey String.
+     * @param emailEnvKey String.
+     * @return person instance
+     */
+    private PersonIdent buildPersonIdent(EnvVars envVars, String nameEnvKey, String emailEnvKey) {
+        PersonIdent result = null;
+        if (null != envVars) {
+            String name = envVars.get(nameEnvKey);
+            String email = envVars.get(emailEnvKey);
+            if (StringUtils.isNotBlank(name) && StringUtils.isNotBlank(email)) {
+                result = new PersonIdent(name, email);
+            }
+        }
+        return result;
     }
 }

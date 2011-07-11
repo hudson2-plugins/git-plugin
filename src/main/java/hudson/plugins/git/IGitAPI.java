@@ -18,13 +18,27 @@ public interface IGitAPI {
 
     EnvVars getEnvironment();
 
+    /**
+     * Inits git repository.
+     *
+     * @throws GitException if repository exists.
+     */
     public void init() throws GitException;
 
     /**
-     * Returns true if the encapsulated directory has ".git" directory
+     * Checks whether .git directory exists
+     *
+     * @return true if the encapsulated directory has ".git" directory, false - otherwise.
+     * @throws GitException if any.
      */
     boolean hasGitRepo() throws GitException;
 
+    /**
+     * Checks whether commit presents in repository.
+     *
+     * @param sha1 commit
+     * @return true if presents, false - otherwise.
+     */
     boolean isCommitInRepo(String sha1);
 
     boolean hasGitModules() throws GitException;
@@ -111,6 +125,9 @@ public interface IGitAPI {
 
     /**
      * Short for {@code checkoutBranch(null, commitish)}
+     *
+     * @param commitish commitish value.
+     * @throws GitException if any.
      */
     void checkout(String commitish) throws GitException;
 
@@ -118,6 +135,8 @@ public interface IGitAPI {
      * Checks out the specified commit/ref into the workspace.
      *
      * @param branch If non-null, move/create the branch in this name at the specified commit-ish and check out that branch.
+     * @param commitish commitish value.
+     * @throws GitException if any.
      */
     void checkoutBranch(String branch, String commitish) throws GitException;
 
@@ -127,7 +146,19 @@ public interface IGitAPI {
 
     void deleteBranch(String name) throws GitException;
 
+    /**
+     * @param f file with commit message.
+     * @throws GitException if any.
+     */
     void commit(File f) throws GitException;
+
+    /**
+     * Performs commit into repository with given message.
+     *
+     * @param message commit message.
+     * @throws GitException if any.
+     */
+    void commit(String message) throws GitException;
 
     ObjectId mergeBase(ObjectId sha1, ObjectId sha12);
 
