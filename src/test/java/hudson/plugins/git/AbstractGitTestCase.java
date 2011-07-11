@@ -77,7 +77,7 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
     }
 
     protected void initGit() {
-        git = new JGitAPI("git", workspace, listener, envVars);
+        git = new GitAPI("git", workspace, listener, envVars);
         git.init();
     }
 
