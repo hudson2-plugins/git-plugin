@@ -84,6 +84,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -105,7 +106,7 @@ public class GitSCM extends SCM implements Serializable {
     public static final String GIT_COMMIT = "GIT_COMMIT";
 
     private static final long serialVersionUID = 1L;
-    static final String DEFAULT_BRANCH = "master";
+    static final String DEFAULT_BRANCH = Constants.MASTER;
 
     // old fields are left so that old config data can be read in, but
     // they are deprecated. transient so that they won't show up in XML
@@ -1035,6 +1036,7 @@ public class GitSCM extends SCM implements Serializable {
 
             final GitRepositoryBrowser gitBrowser = getBrowserFromRequest(req, formData);
             String gitTool = req.getParameter("git.gitTool");
+
             return new GitSCM(
                 remoteRepositories,
                 branches,
@@ -1061,12 +1063,10 @@ public class GitSCM extends SCM implements Serializable {
         public static List<RemoteConfig> createRepositoryConfigurations(String[] urls, String[] repoNames,
                                                                         String[] refSpecs)
             throws IOException, FormException {
-            //TODO return back when the reason of "hudson.SystemQuietingDownGlobalMessage@6bae60c5" error
-            // will be discovered
-//            if (GitUtils.isEmpty(urls)) {
-//                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
-//                    "git.repo.url");
-//            }
+            if (GitUtils.isEmpty(urls)) {
+                throw new FormException(hudson.plugins.git.Messages.GitSCM_Repository_MissedRepositoryExceptionMsg(),
+                    "git.repo.url");
+            }
             List<RemoteConfig> remoteRepositories = new ArrayList<RemoteConfig>();
             if (!GitUtils.isEmpty(urls)) {
                 Config repoConfig = new Config();

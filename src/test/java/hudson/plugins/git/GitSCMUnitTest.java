@@ -30,13 +30,14 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Unit tests for {@link hudson.plugins.git.GitSCM}.
  */
 public class GitSCMUnitTest {
 
-    @Test
+    @Test(expected = Descriptor.FormException.class)
     public void testCreateRepositoryConfigurationsEmptyUrls() throws Descriptor.FormException, IOException {
         List<RemoteConfig> configs = GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{},
             new String[]{}, new String[]{});
@@ -45,9 +46,9 @@ public class GitSCMUnitTest {
 
     @Test
     public void testCreateRepositoryConfigurationsEmptyUrls2() throws Descriptor.FormException, IOException {
-        List<RemoteConfig> configs = GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{""},
-            new String[]{}, new String[]{});
-        assertTrue(configs.isEmpty());
+        List<RemoteConfig> configs = GitSCM.DescriptorImpl.createRepositoryConfigurations(new String[]{"repourl"},
+            new String[]{"reponame"}, new String[]{""});
+        assertFalse(configs.isEmpty());
     }
 }
 
