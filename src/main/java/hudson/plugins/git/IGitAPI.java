@@ -33,6 +33,12 @@ public interface IGitAPI {
      */
     boolean hasGitRepo() throws GitException;
 
+    /**
+     * Checks whether commit presents in repository.
+     *
+     * @param sha1 commit
+     * @return true if presents, false - otherwise.
+     */
     boolean isCommitInRepo(String sha1);
 
     boolean hasGitModules() throws GitException;
@@ -143,10 +149,15 @@ public interface IGitAPI {
     /**
      * @param f file with commit message.
      * @throws GitException if any.
-     * @deprecated use {@link #commit(String)} instead
      */
     void commit(File f) throws GitException;
 
+    /**
+     * Performs commit into repository with given message.
+     *
+     * @param message commit message.
+     * @throws GitException if any.
+     */
     void commit(String message) throws GitException;
 
     ObjectId mergeBase(ObjectId sha1, ObjectId sha12);

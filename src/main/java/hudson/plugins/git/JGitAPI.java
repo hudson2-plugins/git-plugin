@@ -103,7 +103,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
 
     public void init() throws GitException {
         if (hasGitRepo()) {
-            throw new GitException(".git directory already exists! Has it already been initialised?");
+            throw new GitException(Messages.GitAPI_Repository_FailedInitTwiceMsg());
         }
         jGitDelegate = Git.init().setDirectory(new File(workspace.getRemote())).call();
     }
@@ -117,10 +117,9 @@ public class JGitAPI extends GitAPI implements IGitAPI {
             FilePath dotGit = workspace.child(gitDir);
             return dotGit.exists();
         } catch (SecurityException ex) {
-            throw new GitException(
-                "Security error when trying to check for .git. Are you sure you have correct permissions?", ex);
+            throw new GitException(Messages.GitAPI_Repository_SecurityFailureCheckMsg(), ex);
         } catch (Exception e) {
-            throw new GitException("Couldn't check for .git", e);
+            throw new GitException(Messages.GitAPI_Repository_FailedCheckMsg(), e);
         }
     }
 
@@ -161,18 +160,18 @@ public class JGitAPI extends GitAPI implements IGitAPI {
                 .setCommitter(getCommitter())
                 .call();
         } catch (Exception e) {
-            throw new GitException("Cannot commit " + message, e);
+            throw new GitException(Messages.GitAPI_Commit_FailedMsg(message), e);
         }
     }
 
     @Override
     public void clone(final RemoteConfig remoteConfig) throws GitException {
-        listener.getLogger().println("Cloning repository " + remoteConfig.getName());
+        listener.getLogger().println(Messages.GitAPI_Repository_CloningRepositoryMsg(remoteConfig.getName()));
         try {
             workspace.deleteRecursive();
         } catch (Exception e) {
-            e.printStackTrace(listener.error("Failed to clean the workspace"));
-            throw new GitException("Failed to delete workspace", e);
+            e.printStackTrace(listener.error(Messages.GitAPI_Workspace_FailedCleanupMsg()));
+            throw new GitException(Messages.GitAPI_Workspace_FailedDeleteMsg(), e);
         }
 
         // Assume only 1 URL for this repository
@@ -190,11 +189,12 @@ public class JGitAPI extends GitAPI implements IGitAPI {
                         .setURI(source.toPrivateString())
                         .setRemote(remoteConfig.getName())
                         .call();
-                    return source.toPrivateString() + " cloned successful to " + workspace.getAbsolutePath();
+                    return Messages.GitAPI_Repository_CloneSuccessMsg(source.toPrivateString(),
+                        workspace.getAbsolutePath());
                 }
             });
         } catch (Exception e) {
-            throw new GitException("Could not clone " + source, e);
+            throw new GitException(Messages.GitAPI_Repository_FailedCloneMsg(source), e);
         }
     }
 
@@ -204,7 +204,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
         try {
             jGitDelegate.branchCreate().setName(name).call();
         } catch (GitAPIException e) {
-            throw new GitException("Cannot create branch " + name, e);
+            throw new GitException(Messages.GitAPI_Branch_CreateErrorMsg(name), e);
         }
     }
 
@@ -229,7 +229,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
                     .call();
             }
         } catch (GitAPIException e) {
-            throw new GitException("Could not checkout " + branch + " with start point " + commitish, e);
+            throw new GitException(Messages.GitAPI_Branch_CheckoutErrorMsg(branch, commitish), e);
         }
     }
 
@@ -253,7 +253,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
         try {
             jGitDelegate.branchDelete().setBranchNames(name).call();
         } catch (GitAPIException e) {
-            throw new GitException("Could not delete branch " + name, e);
+            throw new GitException(Messages.GitAPI_Branch_DeleteErrorMsg(name), e);
         }
     }
 
@@ -265,7 +265,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
 
     private void verifyGitRepository() {
         if (!hasGitRepo() || null == jGitDelegate) {
-            throw new GitException("Repository doesn't exists or not properly initialized.");
+            throw new GitException(Messages.GitAPI_Repository_InvalidStateMsg());
         }
     }
 
@@ -275,7 +275,7 @@ public class JGitAPI extends GitAPI implements IGitAPI {
             for (Ref ref : refList) {
                 Branch buildBranch = new Branch(ref);
                 result.add(buildBranch);
-                listener.getLogger().println("Seen branch in repository " + buildBranch.getName());
+                listener.getLogger().println(Messages.GitAPI_Branch_BranchInRepoMsg(buildBranch.getName()));
             }
         }
         return result;
