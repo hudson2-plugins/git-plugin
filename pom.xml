@@ -118,12 +118,6 @@
             <name>Eclipse JGit Repository</name>
             <url>http://download.eclipse.org/jgit/maven</url>
         </repository>
-
-        <repository>
-            <id>guice-maven</id>
-            <name>guice maven</name>
-            <url>http://guice-maven.googlecode.com/svn/trunk</url>
-        </repository>
     </repositories>
 
     <dependencies>
@@ -150,13 +144,6 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <scope>test</scope>
-            <version>${easymock.version}</version>
-        </dependency>
-
         <dependency><!-- we contribute AbstractBuildParameters for Git if it's available -->
             <groupId>org.jvnet.hudson.plugins</groupId>
             <artifactId>parameterized-trigger</artifactId>
