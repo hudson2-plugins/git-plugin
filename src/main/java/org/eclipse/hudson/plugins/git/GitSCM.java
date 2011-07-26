@@ -923,7 +923,7 @@ public class GitSCM extends SCM implements Serializable {
 
         public DescriptorImpl() {
             super(GitSCM.class, GitRepositoryBrowser.class);
-            initXSTREAM();
+            beforeLoad();
             load();
         }
 
@@ -932,7 +932,7 @@ public class GitSCM extends SCM implements Serializable {
             return HUDSON_SCM_GITSCM_ALIAS_NAME;
         }
 
-        public static void initXSTREAM() {
+        public static void beforeLoad() {
             //Aliased for backward compatibility after moving to org.eclipse.*
             Items.XSTREAM.alias("ObjectId", ObjectId.class);
             Items.XSTREAM.alias("RemoteConfig", RemoteConfig.class);
@@ -950,6 +950,14 @@ public class GitSCM extends SCM implements Serializable {
             Run.XSTREAM.alias("hudson.plugins.git.Branch", Branch.class);
             Run.XSTREAM.alias("hudson.plugins.git.GitChangeLogParser", GitChangeLogParser.class);
             XmlFile.DEFAULT_XSTREAM.alias(HUDSON_SCM_GITSCM_DESCRIPTOR_ALIAS_NAME, DescriptorImpl.class);
+        }
+
+        public void setGlobalConfigName(String globalConfigName) {
+            this.globalConfigName = globalConfigName;
+        }
+
+        public void setGlobalConfigEmail(String globalConfigEmail) {
+            this.globalConfigEmail = globalConfigEmail;
         }
 
         public String getDisplayName() {
