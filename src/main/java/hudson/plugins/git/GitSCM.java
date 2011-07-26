@@ -75,6 +75,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -550,7 +551,7 @@ public class GitSCM extends SCM implements Serializable {
             environment.put(GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
         }
 
-        final String singleBranch = getSingleBranch(build);
+        final String singleBranch = GitUtils.getSingleBranch(build, getRepositories(), getBranches());
         final String paramLocalBranch = getParamLocalBranch(build);
         Revision tempParentLastBuiltRev = null;
 
@@ -902,12 +903,9 @@ public class GitSCM extends SCM implements Serializable {
     }
 
 
-    public void buildEnvVars(AbstractBuild<?, ?> build, java.util.Map<String, String> env) {
+    public void buildEnvVars(AbstractBuild<?, ?> build, Map<String, String> env) {
         super.buildEnvVars(build, env);
-        String branch = getSingleBranch(build);
-        if (branch != null) {
-            env.put(GIT_BRANCH, branch);
-        }
+        GitUtils.buildBranchEnvVar(build, env, getRepositories(), getBranches());
         BuildData bd = fixNull(getBuildData(build, false));
         if (bd != null && bd.getLastBuiltRevision() != null) {
             String commit = bd.getLastBuiltRevision().getSha1String();
@@ -917,6 +915,7 @@ public class GitSCM extends SCM implements Serializable {
         }
 
     }
+
 
     @Override
     public ChangeLogParser createChangeLogParser() {
@@ -1343,7 +1342,7 @@ public class GitSCM extends SCM implements Serializable {
 
         final EnvVars environment = GitUtils.getPollEnvironment(project, workspace, launcher, listener);
         final List<RemoteConfig> paramRepos = getParamExpandedRepos(lastBuild);
-        final String singleBranch = getSingleBranch(lastBuild);
+        final String singleBranch = GitUtils.getSingleBranch(lastBuild, getRepositories(), getBranches());
 
         boolean pollChangesResult = workingDirectory.act(new FileCallable<Boolean>() {
             private static final long serialVersionUID = 1L;
@@ -1437,39 +1436,6 @@ public class GitSCM extends SCM implements Serializable {
         return refSpec;
     }
 
-    /**
-     * If the configuration is such that we are tracking just one branch of one repository
-     * return that branch specifier (in the form of something like "origin/master"
-     * <p/>
-     * Otherwise return null.
-     */
-    private String getSingleBranch(AbstractBuild<?, ?> build) {
-        // if we have multiple branches skip to advanced usecase
-        if (getBranches().size() != 1 || getRepositories().size() != 1) {
-            return null;
-        }
-
-        String branch = getBranches().get(0).getName();
-        String repository = getRepositories().get(0).getName();
-
-        // replace repository wildcard with repository name
-        if (branch.startsWith("*/")) {
-            branch = repository + branch.substring(1);
-        }
-
-        // if the branch name contains more wildcards then the simple usecase
-        // does not apply and we need to skip to the advanced usecase
-        if (branch.contains("*")) {
-            return null;
-        }
-
-        // substitute build parameters if available
-        ParametersAction parameters = build.getAction(ParametersAction.class);
-        if (parameters != null) {
-            branch = parameters.substitute(build, branch);
-        }
-        return branch;
-    }
 
     private BuildData fixNull(BuildData bd) {
         return bd != null ? bd : new BuildData() /*dummy*/;
