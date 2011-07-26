@@ -933,6 +933,14 @@ public class GitSCM extends SCM implements Serializable {
             load();
         }
 
+        public void setGlobalConfigName(String globalConfigName) {
+            this.globalConfigName = globalConfigName;
+        }
+
+        public void setGlobalConfigEmail(String globalConfigEmail) {
+            this.globalConfigEmail = globalConfigEmail;
+        }
+
         /**
          * Registering legacy converters and aliases for backward compatibility with org.spearce.jgit library
          */
