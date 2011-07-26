@@ -9,10 +9,13 @@ import hudson.model.BuildListener;
 import hudson.model.Environment;
 import hudson.model.Hudson;
 import hudson.model.Node;
+import hudson.model.ParametersAction;
 import hudson.model.StreamBuildListener;
 import hudson.model.TaskListener;
 import hudson.plugins.git.Branch;
+import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitException;
+import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.IGitAPI;
 import hudson.plugins.git.Revision;
 import hudson.slaves.NodeProperty;
@@ -26,13 +29,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.transport.RemoteConfig;
 
 public class GitUtils {
 
-    public static final String DEFAULD_REPO_NAME = "origin";
+    public static final String DEFAULD_REPO_NAME = Constants.DEFAULT_REMOTE_NAME;
 
     IGitAPI git;
     TaskListener listener;
@@ -197,6 +203,91 @@ public class GitUtils {
         return env;
     }
 
+    /**
+     * Builds branch envvars. If several branches or repos are present, env key will be generated based on pattern:
+     * GIT_BRANCH_$repoIdx_$branchIdx. If there is only one branch and repo - {@link GitSCM#GIT_BRANCH} will be used.
+     *
+     * @param build {@link AbstractBuild}
+     * @param env environment variables.
+     * @param repositories list of repos.
+     * @param branches list of {@link BranchSpec}
+     */
+    public static void buildBranchEnvVar(AbstractBuild<?, ?> build, Map<String, String> env,
+                                         List<RemoteConfig> repositories, List<BranchSpec> branches) {
+        if (CollectionUtils.isNotEmpty(repositories) && CollectionUtils.isNotEmpty(branches)) {
+            int branchesSize = branches.size();
+            int repoSize = repositories.size();
+            if (1 == branchesSize && 1 == repoSize) {
+                String branch = getSingleBranch(build, repositories, branches);
+                if (branch != null) {
+                    env.put(GitSCM.GIT_BRANCH, branch);
+                }
+            } else if (branchesSize > 1 || repoSize > 1) {
+                int repoIdx = 1;
+                int branchIdx = 1;
+                for (RemoteConfig repo : repositories) {
+                    for (BranchSpec branchSpec : branches) {
+                        // replace repository wildcard with repository name
+                        String branchName = buildBranch(build, repo.getName(), branchSpec.getName());
+                        if (null != branchName) {
+                            String key = GitSCM.GIT_BRANCH + "_" + repoIdx + "_" + branchIdx;
+                            env.put(key, repo.getName() + "/" + branchName);
+                            branchIdx++;
+                        }
+                    }
+                    repoIdx++;
+                    branchIdx = 1;
+                }
+            }
+        }
+    }
+
+    /**
+     * If the configuration is such that we are tracking just one branch of one repository
+     * return that branch specifier (in the form of something like "origin/master"
+     * <p/>
+     * Otherwise return null.
+     */
+    public static String getSingleBranch(AbstractBuild<?, ?> build, List<RemoteConfig> repositories,
+                                         List<BranchSpec> branches) {
+        // if we have multiple branches skip to advanced usecase
+        if (branches.size() != 1 || repositories.size() != 1) {
+            return null;
+        }
+
+        String branch = branches.get(0).getName();
+        String repository = repositories.get(0).getName();
+        return buildBranch(build, repository, branch);
+    }
+
+    /**
+     * Builds branch based on params.Applied build params if any. Returns null if branch contains *,
+     *
+     * @param build {@link AbstractBuild}
+     * @param repository repo name
+     * @param branchName branch name
+     * @return branch name
+     */
+    public static String buildBranch(AbstractBuild<?, ?> build, String repository, String branchName) {
+        // replace repository wildcard with repository name
+        if (branchName.startsWith("*/")) {
+            branchName = repository + branchName.substring(1);
+        }
+
+        // if the branchName name contains more wildcards then the simple usecase
+        // does not apply and we need to skip to the advanced usecase
+        if (branchName.contains("*")) {
+            return null;
+        }
+
+        // substitute build parameters if available
+        ParametersAction parameters = build.getAction(ParametersAction.class);
+        if (parameters != null) {
+            branchName = parameters.substitute(build, branchName);
+        }
+        return branchName;
+    }
+
     public static String[] fixupNames(String[] names, String[] urls) {
         String[] returnNames = new String[urls.length];
         Set<String> usedNames = new HashSet<String>();
@@ -229,11 +320,11 @@ public class GitUtils {
      * @return true if array is empty.
      */
     public static boolean isEmpty(String[] urls) {
-        if(ArrayUtils.isEmpty(urls)){
+        if (ArrayUtils.isEmpty(urls)) {
             return true;
         }
         for (String url : urls) {
-            if(StringUtils.isNotEmpty(url)){
+            if (StringUtils.isNotEmpty(url)) {
                 return false;
             }
         }
