@@ -45,7 +45,6 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.plugins.git.browser.GitRepositoryBrowser;
-import hudson.plugins.git.browser.GitWeb;
 import hudson.plugins.git.converter.ObjectIdConverter;
 import hudson.plugins.git.converter.RemoteConfigConverter;
 import hudson.plugins.git.opt.PreBuildMergeOptions;
@@ -68,7 +67,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -935,6 +933,14 @@ public class GitSCM extends SCM implements Serializable {
             load();
         }
 
+        public void setGlobalConfigName(String globalConfigName) {
+            this.globalConfigName = globalConfigName;
+        }
+
+        public void setGlobalConfigEmail(String globalConfigEmail) {
+            this.globalConfigEmail = globalConfigEmail;
+        }
+
         /**
          * Registering legacy converters and aliases for backward compatibility with org.spearce.jgit library
          */
@@ -1136,19 +1142,6 @@ public class GitSCM extends SCM implements Serializable {
             }
 
             return mergeOptions;
-        }
-
-        public static GitWeb createGitWeb(String url) {
-            GitWeb gitWeb = null;
-            String gitWebUrl = url;
-            if (gitWebUrl != null && gitWebUrl.length() > 0) {
-                try {
-                    gitWeb = new GitWeb(gitWebUrl);
-                } catch (MalformedURLException e) {
-                    throw new GitException("Error creating GitWeb", e);
-                }
-            }
-            return gitWeb;
         }
 
         public FormValidation doGitRemoteNameCheck(StaplerRequest req, StaplerResponse rsp)
