@@ -315,8 +315,7 @@ public class GitSCM extends SCM implements Serializable {
     }
 
     public String[] getExcludedRegionsNormalized() {
-        return (excludedRegions == null || excludedRegions.trim().equals(""))
-            ? null : excludedRegions.split("[\\r\\n]+");
+        return StringUtils.isBlank(excludedRegions) ? null : excludedRegions.split("[\\r\\n]+");
     }
 
     public String getExcludedUsers() {
@@ -352,25 +351,22 @@ public class GitSCM extends SCM implements Serializable {
     public String getGitConfigNameToUse() {
         String confName;
         String globalConfigName = ((DescriptorImpl) getDescriptor()).getGlobalConfigName();
-        if ((globalConfigName != null) && (gitConfigName == null) && (!fixEmptyAndTrim(globalConfigName).equals(""))) {
+        if (gitConfigName == null && StringUtils.isNotBlank(globalConfigName)) {
             confName = globalConfigName;
         } else {
             confName = gitConfigName;
         }
-
         return fixEmptyAndTrim(confName);
     }
 
     public String getGitConfigEmailToUse() {
         String confEmail;
         String globalConfigEmail = ((DescriptorImpl) getDescriptor()).getGlobalConfigEmail();
-        if ((globalConfigEmail != null) && (gitConfigEmail == null) && (!fixEmptyAndTrim(globalConfigEmail).equals(
-            ""))) {
+        if ((gitConfigEmail == null) && StringUtils.isNotBlank(globalConfigEmail)) {
             confEmail = globalConfigEmail;
         } else {
             confEmail = gitConfigEmail;
         }
-
         return fixEmptyAndTrim(confEmail);
     }
 
@@ -533,12 +529,12 @@ public class GitSCM extends SCM implements Serializable {
         EnvVars environment = build.getEnvironment(listener);
 
         String confName = getGitConfigNameToUse();
-        if ((confName != null) && (!confName.equals(""))) {
+        if (StringUtils.isNotBlank(confName)) {
             environment.put(GitConstants.GIT_COMMITTER_NAME_ENV_VAR, confName);
             environment.put(GitConstants.GIT_AUTHOR_NAME_ENV_VAR, confName);
         }
         String confEmail = getGitConfigEmailToUse();
-        if ((confEmail != null) && (!confEmail.equals(""))) {
+        if (StringUtils.isNotBlank(confEmail)) {
             environment.put(GitConstants.GIT_COMMITTER_EMAIL_ENV_VAR, confEmail);
             environment.put(GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
         }
