@@ -1408,35 +1408,39 @@ public class GitSCM extends SCM implements Serializable {
             private static final long serialVersionUID = 1L;
 
             public Boolean invoke(File localWorkspace, VirtualChannel channel) throws IOException {
-                IGitAPI git = new GitAPI(gitExe, new FilePath(localWorkspace), listener, environment);
 
-                if (git.hasGitRepo()) {
-                    // Repo is there - do a fetch
-                    listener.getLogger().println("Fetching changes from the remote Git repositories");
+                Map<String, List<RemoteConfig>> repoMap = getRemoteConfigMap(paramRepos);
 
-                    // Fetch updates
-                    for (RemoteConfig remoteRepository : paramRepos) {
-                        fetchFrom(git, listener, remoteRepository);
+                List<Revision> canditates = new ArrayList<Revision>();
+                for (Map.Entry<String, List<RemoteConfig>> entry : repoMap.entrySet()) {
+                    FilePath workspace = new FilePath(localWorkspace);
+                    if (StringUtils.isNotEmpty(entry.getKey()) && !entry.getKey().equals(".")) {
+                        workspace = workspace.child(entry.getKey());
                     }
+                    IGitAPI git = new GitAPI(gitExe, workspace, listener, environment);
+                    if (git.hasGitRepo()) {
+                        // Repo is there - do a fetch
+                        listener.getLogger().println("Fetching changes from the remote Git repositories");
 
-                    listener.getLogger().println("Polling for changes in");
-
-                    Collection<Revision> origCandidates = buildChooser.getCandidateRevisions(
-                        true, singleBranch, git, listener, buildData);
-
-                    List<Revision> candidates = new ArrayList<Revision>();
-
-                    for (Revision c : origCandidates) {
-                        if (!isRevExcluded(git, c, listener)) {
-                            candidates.add(c);
+                        for (RemoteConfig remoteRepository : entry.getValue()) {
+                            fetchFrom(git, listener, remoteRepository);
                         }
-                    }
 
-                    return (candidates.size() > 0);
-                } else {
-                    listener.getLogger().println("No Git repository yet, an initial checkout is required");
-                    return true;
+                        Collection<Revision> origCanditates = buildChooser.getCandidateRevisions(
+                            true, singleBranch, git, listener, buildData);
+
+                        for (Revision c : origCanditates) {
+                            if (!isRevExcluded(git, c, listener)) {
+                                canditates.add(c);
+                            }
+                        }
+
+                    } else {
+                        listener.getLogger().println("No Git repository yet, an initial checkout is required");
+                        return true;
+                    }
                 }
+                return (canditates.size() > 0);
             }
         });
 
