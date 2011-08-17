@@ -170,12 +170,12 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
             }
 
             String confName = gitSCM.getGitConfigNameToUse();
-            if ((confName != null) && (!confName.equals(""))) {
+            if (StringUtils.isNotBlank(confName)) {
                 tempEnvironment.put(GitConstants.GIT_COMMITTER_NAME_ENV_VAR, confName);
                 tempEnvironment.put(GitConstants.GIT_AUTHOR_NAME_ENV_VAR, confName);
             }
             String confEmail = gitSCM.getGitConfigEmailToUse();
-            if ((confEmail != null) && (!confEmail.equals(""))) {
+            if (StringUtils.isNotBlank(confEmail)) {
                 tempEnvironment.put(GitConstants.GIT_COMMITTER_EMAIL_ENV_VAR, confEmail);
                 tempEnvironment.put(GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
             }
@@ -438,7 +438,7 @@ public class GitPublisher extends Recorder implements Serializable, MatrixAggreg
         private FormValidation checkFieldNotEmpty(String value, String field) {
             value = StringUtils.strip(value);
 
-            if (value == null || value.equals("")) {
+            if (StringUtils.isBlank(value)) {
                 return FormValidation.error(field + " is required.");
             }
             return FormValidation.ok();

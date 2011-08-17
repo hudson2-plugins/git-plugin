@@ -49,7 +49,6 @@
         <jgit.version>1.0.0.201106090707-r</jgit.version>
         <joda-time.version>1.5.1</joda-time.version>
         <parameterized-trigger.version>2.4</parameterized-trigger.version>
-        <easymock.version>3.0</easymock.version>
         <mockito.version>1.8.5</mockito.version>
     </properties>
 
@@ -118,12 +117,6 @@
             <name>Eclipse JGit Repository</name>
             <url>http://download.eclipse.org/jgit/maven</url>
         </repository>
-
-        <repository>
-            <id>guice-maven</id>
-            <name>guice maven</name>
-            <url>http://guice-maven.googlecode.com/svn/trunk</url>
-        </repository>
     </repositories>
 
     <dependencies>
@@ -150,13 +143,6 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <scope>test</scope>
-            <version>${easymock.version}</version>
-        </dependency>
-
         <dependency><!-- we contribute AbstractBuildParameters for Git if it's available -->
             <groupId>org.jvnet.hudson.plugins</groupId>
             <artifactId>parameterized-trigger</artifactId>
