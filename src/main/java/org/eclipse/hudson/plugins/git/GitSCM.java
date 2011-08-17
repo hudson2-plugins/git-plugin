@@ -47,13 +47,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,7 +63,6 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.hudson.plugins.git.browser.GitRepositoryBrowser;
-import org.eclipse.hudson.plugins.git.browser.GitWeb;
 import org.eclipse.hudson.plugins.git.converter.ObjectIdConverter;
 import org.eclipse.hudson.plugins.git.converter.RemoteConfigConverter;
 import org.eclipse.hudson.plugins.git.opt.PreBuildMergeOptions;
@@ -316,8 +315,7 @@ public class GitSCM extends SCM implements Serializable {
     }
 
     public String[] getExcludedRegionsNormalized() {
-        return (excludedRegions == null || excludedRegions.trim().equals(""))
-            ? null : excludedRegions.split("[\\r\\n]+");
+        return StringUtils.isBlank(excludedRegions) ? null : excludedRegions.split("[\\r\\n]+");
     }
 
     public String getExcludedUsers() {
@@ -353,25 +351,22 @@ public class GitSCM extends SCM implements Serializable {
     public String getGitConfigNameToUse() {
         String confName;
         String globalConfigName = ((DescriptorImpl) getDescriptor()).getGlobalConfigName();
-        if ((globalConfigName != null) && (gitConfigName == null) && (!fixEmptyAndTrim(globalConfigName).equals(""))) {
+        if (gitConfigName == null && StringUtils.isNotBlank(globalConfigName)) {
             confName = globalConfigName;
         } else {
             confName = gitConfigName;
         }
-
         return fixEmptyAndTrim(confName);
     }
 
     public String getGitConfigEmailToUse() {
         String confEmail;
         String globalConfigEmail = ((DescriptorImpl) getDescriptor()).getGlobalConfigEmail();
-        if ((globalConfigEmail != null) && (gitConfigEmail == null) && (!fixEmptyAndTrim(globalConfigEmail).equals(
-            ""))) {
+        if ((gitConfigEmail == null) && StringUtils.isNotBlank(globalConfigEmail)) {
             confEmail = globalConfigEmail;
         } else {
             confEmail = gitConfigEmail;
         }
-
         return fixEmptyAndTrim(confEmail);
     }
 
@@ -534,17 +529,17 @@ public class GitSCM extends SCM implements Serializable {
         EnvVars environment = build.getEnvironment(listener);
 
         String confName = getGitConfigNameToUse();
-        if ((confName != null) && (!confName.equals(""))) {
+        if (StringUtils.isNotBlank(confName)) {
             environment.put(GitConstants.GIT_COMMITTER_NAME_ENV_VAR, confName);
             environment.put(GitConstants.GIT_AUTHOR_NAME_ENV_VAR, confName);
         }
         String confEmail = getGitConfigEmailToUse();
-        if ((confEmail != null) && (!confEmail.equals(""))) {
+        if (StringUtils.isNotBlank(confEmail)) {
             environment.put(GitConstants.GIT_COMMITTER_EMAIL_ENV_VAR, confEmail);
             environment.put(GitConstants.GIT_AUTHOR_EMAIL_ENV_VAR, confEmail);
         }
 
-        final String singleBranch = getSingleBranch(build);
+        final String singleBranch = GitUtils.getSingleBranch(build, getRepositories(), getBranches());
         final String paramLocalBranch = getParamLocalBranch(build);
         Revision tempParentLastBuiltRev = null;
 
@@ -896,12 +891,9 @@ public class GitSCM extends SCM implements Serializable {
     }
 
 
-    public void buildEnvVars(AbstractBuild<?, ?> build, java.util.Map<String, String> env) {
+    public void buildEnvVars(AbstractBuild<?, ?> build, Map<String, String> env) {
         super.buildEnvVars(build, env);
-        String branch = getSingleBranch(build);
-        if (branch != null) {
-            env.put(GIT_BRANCH, branch);
-        }
+        GitUtils.buildBranchEnvVar(build, env, getRepositories(), getBranches());
         BuildData bd = fixNull(getBuildData(build, false));
         if (bd != null && bd.getLastBuiltRevision() != null) {
             String commit = bd.getLastBuiltRevision().getSha1String();
@@ -911,6 +903,7 @@ public class GitSCM extends SCM implements Serializable {
         }
 
     }
+
 
     @Override
     public ChangeLogParser createChangeLogParser() {
@@ -926,7 +919,7 @@ public class GitSCM extends SCM implements Serializable {
 
         public DescriptorImpl() {
             super(GitSCM.class, GitRepositoryBrowser.class);
-            initXSTREAM();
+            beforeLoad();
             load();
         }
 
@@ -935,7 +928,7 @@ public class GitSCM extends SCM implements Serializable {
             return HUDSON_SCM_GITSCM_ALIAS_NAME;
         }
 
-        public static void initXSTREAM() {
+        public static void beforeLoad() {
             //Aliased for backward compatibility after moving to org.eclipse.*
             Items.XSTREAM.alias("ObjectId", ObjectId.class);
             Items.XSTREAM.alias("RemoteConfig", RemoteConfig.class);
@@ -953,6 +946,14 @@ public class GitSCM extends SCM implements Serializable {
             Run.XSTREAM.alias("hudson.plugins.git.Branch", Branch.class);
             Run.XSTREAM.alias("hudson.plugins.git.GitChangeLogParser", GitChangeLogParser.class);
             XmlFile.DEFAULT_XSTREAM.alias(HUDSON_SCM_GITSCM_DESCRIPTOR_ALIAS_NAME, DescriptorImpl.class);
+        }
+
+        public void setGlobalConfigName(String globalConfigName) {
+            this.globalConfigName = globalConfigName;
+        }
+
+        public void setGlobalConfigEmail(String globalConfigEmail) {
+            this.globalConfigEmail = globalConfigEmail;
         }
 
         public String getDisplayName() {
@@ -1146,19 +1147,6 @@ public class GitSCM extends SCM implements Serializable {
             return mergeOptions;
         }
 
-        public static GitWeb createGitWeb(String url) {
-            GitWeb gitWeb = null;
-            String gitWebUrl = url;
-            if (gitWebUrl != null && gitWebUrl.length() > 0) {
-                try {
-                    gitWeb = new GitWeb(gitWebUrl);
-                } catch (MalformedURLException e) {
-                    throw new GitException("Error creating GitWeb", e);
-                }
-            }
-            return gitWeb;
-        }
-
         public FormValidation doGitRemoteNameCheck(StaplerRequest req, StaplerResponse rsp)
             throws IOException, ServletException {
             String mergeRemoteName = req.getParameter("value");
@@ -1350,7 +1338,7 @@ public class GitSCM extends SCM implements Serializable {
 
         final EnvVars environment = GitUtils.getPollEnvironment(project, workspace, launcher, listener);
         final List<RemoteConfig> paramRepos = getParamExpandedRepos(lastBuild);
-        final String singleBranch = getSingleBranch(lastBuild);
+        final String singleBranch = GitUtils.getSingleBranch(lastBuild, getRepositories(), getBranches());
 
         boolean pollChangesResult = workingDirectory.act(new FileCallable<Boolean>() {
             private static final long serialVersionUID = 1L;
@@ -1444,39 +1432,6 @@ public class GitSCM extends SCM implements Serializable {
         return refSpec;
     }
 
-    /**
-     * If the configuration is such that we are tracking just one branch of one repository
-     * return that branch specifier (in the form of something like "origin/master"
-     * <p/>
-     * Otherwise return null.
-     */
-    private String getSingleBranch(AbstractBuild<?, ?> build) {
-        // if we have multiple branches skip to advanced usecase
-        if (getBranches().size() != 1 || getRepositories().size() != 1) {
-            return null;
-        }
-
-        String branch = getBranches().get(0).getName();
-        String repository = getRepositories().get(0).getName();
-
-        // replace repository wildcard with repository name
-        if (branch.startsWith("*/")) {
-            branch = repository + branch.substring(1);
-        }
-
-        // if the branch name contains more wildcards then the simple usecase
-        // does not apply and we need to skip to the advanced usecase
-        if (branch.contains("*")) {
-            return null;
-        }
-
-        // substitute build parameters if available
-        ParametersAction parameters = build.getAction(ParametersAction.class);
-        if (parameters != null) {
-            branch = parameters.substitute(build, branch);
-        }
-        return branch;
-    }
 
     private BuildData fixNull(BuildData bd) {
         return bd != null ? bd : new BuildData() /*dummy*/;

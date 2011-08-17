@@ -44,7 +44,7 @@ public abstract class BaseLegacyConverterTest {
         //Create target config file in order to perform marshall operation
         targetConfigFile = new File(sourceConfigFile.getParent(), "target_" + getResourceName());
         FileUtils.copyFile(sourceConfigFile, targetConfigFile);
-        GitSCM.DescriptorImpl.initXSTREAM();
+        GitSCM.DescriptorImpl.beforeLoad();
         //Empty implementation of xstream without any aliased from git
         defaultXSTREAM = new XStream2();
         defaultXSTREAM.alias("project", FreeStyleProject.class);
