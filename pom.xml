@@ -9,7 +9,7 @@
 
     <groupId>org.hudsonci.plugins</groupId>
     <artifactId>git</artifactId>
-    <version>2.1.1</version>
+    <version>2.1.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Hudson GIT plugin</name>
     <description>Integrates Hudson with GIT SCM</description>
