@@ -50,4 +50,9 @@ public class GitChangeSetList extends ChangeLogSet<GitChangeSet> {
     public List<GitChangeSet> getLogs() {
         return changeSets;
     }
+
+    @Override
+    public String getKind() {
+        return "git";
+    }
 }
