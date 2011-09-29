@@ -95,13 +95,13 @@
         </plugins>
     </build>
 
-    <!-- repositories>
+    <repositories>
         <repository>
             <id>jgit-repository</id>
             <name>Eclipse JGit Repository</name>
             <url>http://download.eclipse.org/jgit/maven</url>
         </repository>
-    </repositories -->
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -125,6 +125,12 @@
             <artifactId>parameterized-trigger</artifactId>
             <version>${parameterized-trigger.version}</version>
             <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jvnet.hudson.plugins</groupId>
+                    <artifactId>subversion</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
     </dependencies>
