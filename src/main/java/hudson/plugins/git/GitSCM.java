@@ -83,6 +83,8 @@ import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -1816,6 +1818,76 @@ public class GitSCM extends SCM implements Serializable {
             return changeLog;
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        GitSCM that = (GitSCM) o;
+
+        if (!GitUtils.isEqualCollection(remoteRepositories, that.remoteRepositories)) {
+            return false;
+        }
+
+        if (!GitUtils.isEqualCollection(branches, that.branches)) {
+            return false;
+        }
+
+        if (!GitUtils.isEqualCollection(submoduleCfg, that.submoduleCfg)) {
+            return false;
+        }
+
+        return new EqualsBuilder()
+            .append(configVersion, that.configVersion)
+            .append(localBranch, that.localBranch)
+            .append(mergeOptions, that.mergeOptions)
+            .append(recursiveSubmodules, that.recursiveSubmodules)
+            .append(doGenerateSubmoduleConfigurations, that.doGenerateSubmoduleConfigurations)
+            .append(authorOrCommitter, that.authorOrCommitter)
+            .append(clean, that.clean)
+            .append(wipeOutWorkspace, that.wipeOutWorkspace)
+            .append(pruneBranches, that.pruneBranches)
+            .append(buildChooser, that.buildChooser)
+            .append(browser, that.browser)
+            .append(excludedRegions, that.excludedRegions)
+            .append(excludedUsers, that.excludedUsers)
+            .append(gitConfigName, that.gitConfigName)
+            .append(gitConfigEmail, that.gitConfigEmail)
+            .append(gitTool, that.gitTool)
+            .append(skipTag, that.skipTag)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(configVersion)
+            .append(remoteRepositories)
+            .append(branches)
+            .append(localBranch)
+            .append(mergeOptions)
+            .append(recursiveSubmodules)
+            .append(doGenerateSubmoduleConfigurations)
+            .append(authorOrCommitter)
+            .append(clean)
+            .append(wipeOutWorkspace)
+            .append(pruneBranches)
+            .append(buildChooser)
+            .append(browser)
+            .append(submoduleCfg)
+            .append(excludedRegions)
+            .append(excludedUsers)
+            .append(gitConfigName)
+            .append(gitConfigEmail)
+            .append(gitTool)
+            .append(skipTag)
+            .hashCode();
+    }
+
 }
 
 

@@ -15,6 +15,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -89,5 +90,27 @@ public class ViewGitWeb extends GitRepositoryBrowser {
             throws IOException, ServletException {
             return new GitUrlChecker(url, "ViewGit").check();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ViewGitWeb that = (ViewGitWeb) o;
+
+        return new EqualsBuilder()
+            .append(url, that.url)
+            .append(projectName, that.projectName)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return url != null ? url.hashCode() : 0;
     }
 }

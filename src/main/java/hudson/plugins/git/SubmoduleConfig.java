@@ -24,7 +24,10 @@
 
 package hudson.plugins.git;
 
+import hudson.plugins.git.util.GitUtils;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class SubmoduleConfig implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
@@ -76,5 +79,33 @@ public class SubmoduleConfig implements java.io.Serializable {
         }
         return ret;
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SubmoduleConfig that = (SubmoduleConfig) o;
+
+        if (!GitUtils.isEqualArray(branches, that.branches)) {
+            return false;
+        }
+
+        return new EqualsBuilder()
+            .append(submoduleName, that.submoduleName)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(branches)
+            .append(submoduleName)
+            .toHashCode();
     }
 }

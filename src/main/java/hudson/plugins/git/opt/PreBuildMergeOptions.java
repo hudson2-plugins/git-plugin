@@ -25,6 +25,8 @@
 package hudson.plugins.git.opt;
 
 import java.io.Serializable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
 
 /**
@@ -67,5 +69,30 @@ public class PreBuildMergeOptions implements Serializable {
 
     public boolean doMerge() {
         return mergeTarget != null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PreBuildMergeOptions that = (PreBuildMergeOptions) o;
+
+        return new EqualsBuilder()
+            .append(mergeRemote, that.mergeRemote)
+            .append(mergeTarget, that.mergeTarget)
+            .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+            .append(mergeRemote)
+            .append(mergeTarget)
+            .toHashCode();
     }
 }
