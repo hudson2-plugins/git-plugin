@@ -253,7 +253,22 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             throw new RuntimeException("No author in this changeset!");
         }
 
-        User user = User.get(csAuthor, true);
+        User user = User.get(csAuthor, false);
+
+        // Useful for OpenID integrations to use the entire email address.
+        // Diverges from git-plugin https://github.com/jenkinsci/git-plugin/commit/3607d2ec90f69edcf8cedfcb358ce19a980b8f1a, which
+        // was not incorporated in this branch.
+        if (user == null)
+            user = User.get(csAuthorEmail, true);
+
+        // Set the author name
+
+        try {
+            user.setFullName(csAuthor);
+            user.save();
+        } catch (IOException e) {
+            LOGGER.log(Level.FINEST, "Could not set author name to user properties.", e);
+        }
 
         // set email address for user if needed
         if (fixEmpty(csAuthorEmail) != null) {

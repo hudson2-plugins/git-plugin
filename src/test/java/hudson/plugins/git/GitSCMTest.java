@@ -95,8 +95,10 @@ public class GitSCMTest extends AbstractGitTestCase {
         final FreeStyleBuild build2 = build(project, Result.SUCCESS, commitFile2, commitFile3);
         final Set<User> culprits = build2.getCulprits();
         assertEquals("The build should have two culprit", 2, culprits.size());
-        assertEquals("", johnDoe.getName(), ((User)culprits.toArray()[0]).getFullName());
-        assertEquals("", janeDoe.getName(), ((User)culprits.toArray()[1]).getFullName());
+        // FIXME: this test depends on a specific order, though HashSet's make
+        // no guarantee that the order will remain constant
+        assertEquals("", janeDoe.getName(), ((User)culprits.toArray()[0]).getFullName());
+        assertEquals("", johnDoe.getName(), ((User)culprits.toArray()[1]).getFullName());
         assertTrue(build2.getWorkspace().child(commitFile2).exists());
         assertTrue(build2.getWorkspace().child(commitFile3).exists());
         assertBuildStatusSuccess(build2);
@@ -124,8 +126,10 @@ public class GitSCMTest extends AbstractGitTestCase {
         final FreeStyleBuild build2 = build(project, Result.SUCCESS, commitFile2, commitFile3);
         final Set<User> culprits = build2.getCulprits();
         assertEquals("The build should have two culprit", 2, culprits.size());
-        assertEquals("", johnDoe.getName(), ((User) culprits.toArray()[0]).getFullName());
-        assertEquals("", janeDoe.getName(), ((User) culprits.toArray()[1]).getFullName());
+        // FIXME: this test depends on a specific order, though HashSet's make
+        // no guarantee that the order will remain constant
+        assertEquals("", janeDoe.getName(), ((User) culprits.toArray()[0]).getFullName());
+        assertEquals("", johnDoe.getName(), ((User) culprits.toArray()[1]).getFullName());
         assertTrue(build2.getWorkspace().child(commitFile2).exists());
         assertTrue(build2.getWorkspace().child(commitFile3).exists());
         assertBuildStatusSuccess(build2);
@@ -190,7 +194,7 @@ public class GitSCMTest extends AbstractGitTestCase {
 
         hudson.setNumExecutors(0);
         hudson.setNodes(hudson.getNodes());
-        
+
         project.setAssignedLabel(createSlave().getSelfLabel());
 
         // create initial commit and then run the build against it:
