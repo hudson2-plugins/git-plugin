@@ -78,17 +78,10 @@ public class GitChangeSet extends ChangeLogSet.Entry {
     private Collection<Path> paths = new HashSet<Path>();
     private boolean authorOrCommitter;
 
-    private boolean createAccountBaseOnCommitterEmail;
-
     public GitChangeSet(List<String> lines, boolean authorOrCommitter) {
         this.authorOrCommitter = authorOrCommitter;
         if (lines.size() > 0) {
             parseCommit(lines);
-        }
-        ChangeLogSet parent = getParent();
-        if (parent != null) {
-            this.createAccountBaseOnCommitterEmail = ((GitSCM) parent.getBuild().getProject().getScm()).
-                isCreateAccountBaseOnCommitterEmail();
         }
     }
 
@@ -260,7 +253,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             throw new RuntimeException("No author in this changeset!");
         }
 
-        return findOrCreateUser(csAuthor, csAuthorEmail, createAccountBaseOnCommitterEmail);
+        return findOrCreateUser(csAuthor, csAuthorEmail, isCreateAccountBaseOnCommitterEmail());
     }
 
     /**
@@ -294,6 +287,16 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             }
         }
         return user;
+    }
+
+    private boolean isCreateAccountBaseOnCommitterEmail() {
+        ChangeLogSet parent = getParent();
+        boolean createAccountBaseOnCommitterEmail = false;
+        if (parent != null) {
+            createAccountBaseOnCommitterEmail = ((GitSCM) parent.getBuild().getProject().getScm()).
+                isCreateAccountBaseOnCommitterEmail();
+        }
+        return createAccountBaseOnCommitterEmail;
     }
 
     /**
