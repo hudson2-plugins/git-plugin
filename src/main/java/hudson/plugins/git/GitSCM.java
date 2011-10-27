@@ -419,6 +419,17 @@ public class GitSCM extends SCM implements Serializable {
         return fixEmptyAndTrim(confEmail);
     }
 
+    /**
+     * Returns true if Hudson should create new accounts base on Git commiter's email instead of full name.
+     *
+     * @return true if Hudson should create new accounts base on Git commiter's email instead of full name.
+     */
+    public boolean isCreateAccountBaseOnCommitterEmail() {
+        DescriptorImpl gitDescriptor = ((DescriptorImpl) getDescriptor());
+        return (gitDescriptor != null && gitDescriptor.isCreateAccountBaseOnCommitterEmail());
+    }
+
+
     public boolean getSkipTag() {
         return this.skipTag;
     }
@@ -985,6 +996,7 @@ public class GitSCM extends SCM implements Serializable {
         private String gitExe;
         private String globalConfigName;
         private String globalConfigEmail;
+        private boolean createAccountBaseOnCommitterEmail;
 
         public DescriptorImpl() {
             super(GitSCM.class, GitRepositoryBrowser.class);
@@ -998,6 +1010,10 @@ public class GitSCM extends SCM implements Serializable {
 
         public void setGlobalConfigEmail(String globalConfigEmail) {
             this.globalConfigEmail = globalConfigEmail;
+        }
+
+        public void setCreateAccountBaseOnCommitterEmail(boolean createAccountBaseOnCommitterEmail) {
+            this.createAccountBaseOnCommitterEmail = createAccountBaseOnCommitterEmail;
         }
 
         /**
@@ -1056,6 +1072,15 @@ public class GitSCM extends SCM implements Serializable {
          */
         public String getGlobalConfigEmail() {
             return globalConfigEmail;
+        }
+
+        /**
+         * Returns true if Hudson should create new accounts base on Git commiter's email instead of full name.
+         *
+         * @return true if Hudson should create new accounts base on Git commiter's email instead of full name.
+         */
+        public boolean isCreateAccountBaseOnCommitterEmail() {
+            return createAccountBaseOnCommitterEmail;
         }
 
         /**
