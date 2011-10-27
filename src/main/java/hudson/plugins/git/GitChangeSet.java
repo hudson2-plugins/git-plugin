@@ -260,7 +260,7 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             throw new RuntimeException("No author in this changeset!");
         }
 
-        return getUser(csAuthor, csAuthorEmail);
+        return findOrCreateUser(csAuthor, csAuthorEmail, createAccountBaseOnCommitterEmail);
     }
 
     /**
@@ -268,9 +268,10 @@ public class GitChangeSet extends ChangeLogSet.Entry {
      *
      * @param csAuthor user name.
      * @param csAuthorEmail user email.
+     * @param createAccountBaseOnCommitterEmail true if create new user based on committer's email.
      * @return {@link User}
      */
-    User getUser(String csAuthor, String csAuthorEmail) {
+    User findOrCreateUser(String csAuthor, String csAuthorEmail, boolean createAccountBaseOnCommitterEmail) {
         User user;
         if (createAccountBaseOnCommitterEmail) {
             user = User.get(csAuthorEmail, true);
