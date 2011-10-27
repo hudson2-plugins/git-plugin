@@ -23,21 +23,13 @@
  */
 package hudson.plugins.git;
 
-import hudson.EnvVars;
-import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.User;
-import hudson.plugins.git.opt.PreBuildMergeOptions;
-import hudson.plugins.git.util.DefaultBuildChooser;
-import hudson.slaves.EnvironmentVariablesNodeProperty;
 import hudson.slaves.EnvironmentVariablesNodeProperty.Entry;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
-import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 
 /**
  * Tests for {@link GitSCM}.
@@ -95,8 +87,8 @@ public class GitSCMTest extends AbstractGitTestCase {
         final FreeStyleBuild build2 = build(project, Result.SUCCESS, commitFile2, commitFile3);
         final Set<User> culprits = build2.getCulprits();
         assertEquals("The build should have two culprit", 2, culprits.size());
-        assertEquals("", johnDoe.getName(), ((User)culprits.toArray()[0]).getFullName());
-        assertEquals("", janeDoe.getName(), ((User)culprits.toArray()[1]).getFullName());
+        assertTrue("User janeDoe is absent in culprits", doesCulpritsContainUser(culprits, janeDoe.getName()));
+        assertTrue("User johnDoe is absent in culprits", doesCulpritsContainUser(culprits, johnDoe.getName()));
         assertTrue(build2.getWorkspace().child(commitFile2).exists());
         assertTrue(build2.getWorkspace().child(commitFile3).exists());
         assertBuildStatusSuccess(build2);
@@ -124,8 +116,8 @@ public class GitSCMTest extends AbstractGitTestCase {
         final FreeStyleBuild build2 = build(project, Result.SUCCESS, commitFile2, commitFile3);
         final Set<User> culprits = build2.getCulprits();
         assertEquals("The build should have two culprit", 2, culprits.size());
-        assertEquals("", johnDoe.getName(), ((User) culprits.toArray()[0]).getFullName());
-        assertEquals("", janeDoe.getName(), ((User) culprits.toArray()[1]).getFullName());
+        assertTrue("User janeDoe is absent in culprits", doesCulpritsContainUser(culprits, janeDoe.getName()));
+        assertTrue("User johnDoe is absent in culprits", doesCulpritsContainUser(culprits, johnDoe.getName()));
         assertTrue(build2.getWorkspace().child(commitFile2).exists());
         assertTrue(build2.getWorkspace().child(commitFile3).exists());
         assertBuildStatusSuccess(build2);
@@ -397,5 +389,12 @@ public class GitSCMTest extends AbstractGitTestCase {
         assertFalse("scm polling should not detect any more changes after last build", project.pollSCMChanges(listener));
     }
 
-
+    private boolean doesCulpritsContainUser(Set<User> culprits, String name){
+        for (User culprit : culprits) {
+            if(name.equals(culprit.getFullName())){
+                return true;
+            }
+        }
+        return false;
+    }
 }

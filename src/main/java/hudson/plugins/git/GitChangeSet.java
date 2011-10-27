@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov
+ * Copyright (c) 2004-2011, Oracle Corporation, Andrew Bayer, Anton Kozak, Nikita Levyankov, rogerhu
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -253,7 +253,30 @@ public class GitChangeSet extends ChangeLogSet.Entry {
             throw new RuntimeException("No author in this changeset!");
         }
 
-        User user = User.get(csAuthor, true);
+        return findOrCreateUser(csAuthor, csAuthorEmail, isCreateAccountBaseOnCommitterEmail());
+    }
+
+    /**
+     * Returns user of the change set.
+     *
+     * @param csAuthor user name.
+     * @param csAuthorEmail user email.
+     * @param createAccountBaseOnCommitterEmail true if create new user based on committer's email.
+     * @return {@link User}
+     */
+    User findOrCreateUser(String csAuthor, String csAuthorEmail, boolean createAccountBaseOnCommitterEmail) {
+        User user;
+        if (createAccountBaseOnCommitterEmail) {
+            user = User.get(csAuthorEmail, true);
+            try {
+                user.setFullName(csAuthor);
+                user.save();
+            } catch (IOException e) {
+                LOGGER.log(Level.FINEST, "Could not set author name to user properties.", e);
+            }
+        } else {
+            user = User.get(csAuthor, true);
+        }
 
         // set email address for user if needed
         if (fixEmpty(csAuthorEmail) != null) {
@@ -263,8 +286,17 @@ public class GitChangeSet extends ChangeLogSet.Entry {
                 LOGGER.log(Level.FINEST, "Failed to add email to user properties.", e);
             }
         }
-
         return user;
+    }
+
+    private boolean isCreateAccountBaseOnCommitterEmail() {
+        ChangeLogSet parent = getParent();
+        boolean createAccountBaseOnCommitterEmail = false;
+        if (parent != null) {
+            createAccountBaseOnCommitterEmail = ((GitSCM) parent.getBuild().getProject().getScm()).
+                isCreateAccountBaseOnCommitterEmail();
+        }
+        return createAccountBaseOnCommitterEmail;
     }
 
     /**
