@@ -53,7 +53,7 @@ public class GitPublisherTest extends AbstractGitTestCase {
         MatrixProject mp = createMatrixProject("xyz");
         mp.setAxes(new AxisList(new Axis("VAR", "a", "b")));
         mp.setScm(new GitSCM(workDir.getAbsolutePath()));
-        mp.getPublishersList().add(new GitPublisher(
+        mp.addPublisher(new GitPublisher(
             Collections.singletonList(new TagToPush("origin", "foo", true)),
             Collections.<BranchToPush>emptyList(), true, true) {
             @Override
