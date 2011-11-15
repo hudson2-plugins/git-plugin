@@ -115,7 +115,8 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
         return GitSCM.DescriptorImpl.createRepositoryConfigurations(
             new String[]{workDir.getAbsolutePath()},
             new String[]{"origin"},
-            new String[]{""}
+            new String[]{""},
+            new String[]{relativeTargetDir}
         );
     }
 
@@ -133,9 +134,10 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
                                           String relativeTargetDir,
                                           String excludedRegions,
                                           String excludedUsers) throws Exception {
-        return setupProject(branchString, authorOrCommitter, relativeTargetDir, excludedRegions, excludedUsers, null);
+        return setupProject(branchString, authorOrCommitter, relativeTargetDir, excludedRegions, excludedUsers, null, null);
     }
 
+    @Deprecated
     protected FreeStyleProject setupProject(String branchString, boolean authorOrCommitter,
                                           String relativeTargetDir, String excludedRegions,
                                           String excludedUsers, String localBranch) throws Exception {
@@ -146,6 +148,21 @@ public abstract class AbstractGitTestCase extends HudsonTestCase {
             new PreBuildMergeOptions(), false, Collections.<SubmoduleConfig>emptyList(), false,
             false, new DefaultBuildChooser(), null, null, authorOrCommitter, relativeTargetDir,
             excludedRegions, excludedUsers, localBranch, false, false, null, null, false));
+        project.getBuildersList().add(new CaptureEnvironmentBuilder());
+        return project;
+    }
+
+    protected FreeStyleProject setupProject(String branchString, boolean authorOrCommitter,
+                                          String relativeTargetDir, String excludedRegions,
+                                          String excludedUsers, String localBranch,
+                                          String includedRegions) throws Exception {
+        FreeStyleProject project = createFreeStyleProject();
+        project.setScm(new GitSCM(
+            createRemoteRepositories(relativeTargetDir),
+            Collections.singletonList(new BranchSpec(branchString)),
+            new PreBuildMergeOptions(), false, Collections.<SubmoduleConfig>emptyList(), false,
+            false, new DefaultBuildChooser(), null, null, authorOrCommitter,
+            excludedRegions, excludedUsers, localBranch, false, false, null, null, false, includedRegions));
         project.getBuildersList().add(new CaptureEnvironmentBuilder());
         return project;
     }
