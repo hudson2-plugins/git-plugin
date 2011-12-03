@@ -26,6 +26,7 @@ import java.net.URL;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.eclipse.hudson.plugins.git.GitChangeSet;
+import org.eclipse.hudson.plugins.git.GitChangeSet.Path;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -73,7 +74,7 @@ public class CGit extends GitRepositoryBrowser {
      * @throws IOException
      */
     @Override
-    public URL getDiffLink(GitChangeSet.Path path) throws IOException {
+    public URL getDiffLink(Path path) throws IOException {
         GitChangeSet changeSet = path.getChangeSet();
         return new URL(url,
             url.getPath() + "diff/" + path.getPath() + param().add("id=" + changeSet.getId()).toString());
@@ -88,7 +89,7 @@ public class CGit extends GitRepositoryBrowser {
      * @throws IOException
      */
     @Override
-    public URL getFileLink(GitChangeSet.Path path) throws IOException {
+    public URL getFileLink(Path path) throws IOException {
         GitChangeSet changeSet = path.getChangeSet();
 
         if (path.getEditType() == EditType.DELETE) {

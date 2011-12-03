@@ -61,7 +61,7 @@ public class DefaultBuildChooser extends BuildChooser {
         // if the branch name contains more wildcards then the simple usecase
         // does not apply and we need to skip to the advanced usecase
         if (singleBranch == null || singleBranch.contains("*")) {
-            return getAdvancedCandidateRevisions(isPollCall, listener, new GitUtils(listener, git), data);
+            return getAdvancedCandidateRevisions(listener, new GitUtils(listener, git), data);
         }
 
         // check if we're trying to build a specific commit
@@ -135,7 +135,7 @@ public class DefaultBuildChooser extends BuildChooser {
      * @throws IOException
      * @throws GitException
      */
-    private Collection<Revision> getAdvancedCandidateRevisions(boolean isPollCall, TaskListener listener,
+    private Collection<Revision> getAdvancedCandidateRevisions(TaskListener listener,
                                                                GitUtils utils, BuildData data)
         throws GitException, IOException {
         // 1. Get all the (branch) revisions that exist
@@ -186,15 +186,6 @@ public class DefaultBuildChooser extends BuildChooser {
             }
         }
         verbose(listener, "After filtering out what's already been built: {0}", revs);
-
-        // if we're trying to run a build (not an SCM poll) and nothing new
-        // was found then just run the last build again
-        if (!isPollCall && revs.isEmpty() && data.getLastBuiltRevision() != null) {
-            verbose(listener, "Nothing seems worth building, so falling back to the previously built revision: {0}",
-                data.getLastBuiltRevision());
-            return Collections.singletonList(data.getLastBuiltRevision());
-        }
-
         return revs;
     }
 

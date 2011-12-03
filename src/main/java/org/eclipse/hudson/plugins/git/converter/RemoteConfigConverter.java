@@ -58,7 +58,7 @@ public class RemoteConfigConverter extends RobustReflectionConverter implements 
         final org.spearce.jgit.transport.RemoteConfig remoteConfig = new org.spearce.jgit.transport.RemoteConfig();
         CustomObjectInputStream.StreamCallback callback = new LegacyInputStreamCallback(reader, context, remoteConfig);
         try {
-            CustomObjectInputStream objectInput = CustomObjectInputStream.getInstance(context, callback);
+            CustomObjectInputStream objectInput = CustomObjectInputStream.getInstance(context, callback, null);
             remoteConfig.readExternal(objectInput);
             objectInput.popCallback();
             return remoteConfig.toRemote();
