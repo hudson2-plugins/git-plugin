@@ -30,6 +30,7 @@ import hudson.slaves.NodeProperty;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -343,6 +344,44 @@ public class GitUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Verifies if first collection equals second without ordering.
+     * @param c1 collection
+     * @param c2 collection
+     * @return true if collections equal.
+     */
+    public static boolean isEqualCollection(Collection c1, Collection c2) {
+        if (c1 == c2) {
+            return true;
+        }
+        if (c1 == null && c2 == null) {
+            return true;
+        }
+        if (c1 == null || c2 == null) {
+            return false;
+        }
+        return CollectionUtils.isEqualCollection(c1, c2);
+    }
+
+    /**
+     * Verifies if first array equals second without ordering.
+     * @param o1 array
+     * @param o2 array
+     * @return true if arrays equal.
+     */
+    public static boolean isEqualArray(Object[] o1, Object[] o2) {
+        if (o1 == o2) {
+            return true;
+        }
+        if (o1 == null && o2 == null) {
+            return true;
+        }
+        if (o1 == null || o2 == null) {
+            return false;
+        }
+        return CollectionUtils.isEqualCollection(Arrays.asList(o1), Arrays.asList(o2));
     }
 
     private static final Logger LOGGER = Logger.getLogger(GitUtils.class.getName());

@@ -112,4 +112,26 @@ public class GitWeb extends GitRepositoryBrowser {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GitWeb gitWeb = (GitWeb) o;
+
+        if (url != null ? !url.equals(gitWeb.url) : gitWeb.url != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return url != null ? url.hashCode() : 0;
+    }
 }
