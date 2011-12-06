@@ -125,6 +125,16 @@
             <artifactId>hudson-test-framework</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jvnet.hudson.plugins</groupId>
+                    <artifactId>subversion</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jvnet.hudson.main</groupId>
+                    <artifactId>rest-plugin</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>

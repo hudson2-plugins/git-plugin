@@ -9,7 +9,7 @@
  *
  * Contributors:
  *
- * Andrew Bayer, Anton Kozak, Nikita Levyankov
+ * Andrew Bayer, Anton Kozak, Nikita Levyankov, rogerhu
  *
  *******************************************************************************/
 
@@ -57,7 +57,7 @@ public class GitChangeLogParser extends ChangeLogParser {
             while ((line = rdr.readLine()) != null) {
                 if (line.startsWith("commit ")) {
                     if (lines != null) {
-                        r.add(parseCommit(lines, authorOrCommitter));
+                        r.add(new GitChangeSet(lines, authorOrCommitter));
                     }
                     lines = new ArrayList<String>();
                 }
@@ -68,7 +68,7 @@ public class GitChangeLogParser extends ChangeLogParser {
             }
 
             if (lines != null) {
-                r.add(parseCommit(lines, authorOrCommitter));
+                r.add(new GitChangeSet(lines, authorOrCommitter));
             }
 
             return new GitChangeSetList(build, r);
@@ -76,9 +76,4 @@ public class GitChangeLogParser extends ChangeLogParser {
             rdr.close();
         }
     }
-
-    private GitChangeSet parseCommit(List<String> lines, boolean authorOrCommitter) {
-        return new GitChangeSet(lines, authorOrCommitter);
-    }
-
 }
