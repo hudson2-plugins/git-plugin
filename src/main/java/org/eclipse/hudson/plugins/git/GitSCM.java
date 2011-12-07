@@ -579,7 +579,7 @@ public class GitSCM extends SCM implements Serializable {
     public boolean checkout(final AbstractBuild build, Launcher launcher,
                             final FilePath workspace, final BuildListener listener, File changelogFile)
         throws IOException, InterruptedException {
-        BuildConfig buildConfig;
+        BuildConfig buildConfig = null;
 
         listener.getLogger()
             .println(
@@ -676,7 +676,6 @@ public class GitSCM extends SCM implements Serializable {
             if (mergeOptions.doMerge() && !revToBuild.containsBranchName(mergeOptions.getRemoteBranchName())) {
                 buildConfig = getMergedBuildConfig(listener, workingDirectory, buildNumber, gitExe, buildData,
                     environment, paramLocalBranch, revToBuild, internalTagName, internalTagComment);
-                build.addAction(buildConfig.getBuildData());
                 result = result && changeLogResult(buildConfig.getChangeLog(), changelogFile);
                 continue;
             }
@@ -684,18 +683,16 @@ public class GitSCM extends SCM implements Serializable {
             // No merge
             buildConfig = getBuildConfig(listener, workingDirectory, buildNumber, gitExe, buildData, environment,
                 paramLocalBranch, repos, revToBuild, internalTagName, internalTagComment);
-
-
-            build.addAction(buildConfig.getBuildData());
-
             result = result && changeLogResult(buildConfig.getChangeLog(), changelogFile);
+        }
+        if (null != buildConfig) {
+            build.addAction(buildConfig.getBuildData());
         }
         if (!hasChanges) {
            return changeLogResult(null, changelogFile);
         }
         return result;
     }
-
     /**
      * Returns build config.
      *
