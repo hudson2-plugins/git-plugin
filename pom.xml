@@ -140,6 +140,10 @@
                     <groupId>org.jvnet.hudson.main</groupId>
                     <artifactId>rest-plugin</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.jvnet.hudson.main</groupId>
+                    <artifactId>maven-plugin</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
