@@ -1078,7 +1078,7 @@ public class GitSCM extends SCM implements Serializable {
             GitTool[] gitToolInstallations = Hudson.getInstance()
                 .getDescriptorByType(GitTool.DescriptorImpl.class)
                 .getInstallations();
-            return Arrays.asList(gitToolInstallations);
+            return gitToolInstallations != null? Arrays.asList(gitToolInstallations) : Collections.<GitTool>emptyList();
         }
 
         /**
