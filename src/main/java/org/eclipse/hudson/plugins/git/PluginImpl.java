@@ -17,12 +17,12 @@ package org.eclipse.hudson.plugins.git;
 
 import hudson.Plugin;
 import hudson.XmlFile;
-import hudson.model.Build;
 import hudson.model.Items;
 import hudson.model.Run;
 import java.io.IOException;
 import org.eclipse.hudson.plugins.git.converter.ObjectIdConverter;
 import org.eclipse.hudson.plugins.git.converter.RemoteConfigConverter;
+import org.eclipse.hudson.plugins.git.util.Build;
 import org.eclipse.hudson.plugins.git.util.BuildData;
 import org.eclipse.hudson.plugins.git.util.DefaultBuildChooser;
 import org.eclipse.jgit.lib.ObjectId;
