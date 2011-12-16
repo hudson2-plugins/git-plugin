@@ -20,6 +20,12 @@ import hudson.XmlFile;
 import hudson.model.Items;
 import hudson.model.Run;
 import java.io.IOException;
+import org.eclipse.hudson.plugins.git.browser.CGit;
+import org.eclipse.hudson.plugins.git.browser.GitRepositoryBrowser;
+import org.eclipse.hudson.plugins.git.browser.GitWeb;
+import org.eclipse.hudson.plugins.git.browser.GithubWeb;
+import org.eclipse.hudson.plugins.git.browser.RedmineWeb;
+import org.eclipse.hudson.plugins.git.browser.ViewGitWeb;
 import org.eclipse.hudson.plugins.git.converter.ObjectIdConverter;
 import org.eclipse.hudson.plugins.git.converter.RemoteConfigConverter;
 import org.eclipse.hudson.plugins.git.util.Build;
@@ -60,6 +66,13 @@ public class PluginImpl extends Plugin {
         Items.XSTREAM.alias("hudson.plugins.git.GitSCM", GitSCM.class);
         Items.XSTREAM.alias("hudson.plugins.git.BranchSpec", BranchSpec.class);
         Items.XSTREAM.alias("hudson.plugins.git.util.DefaultBuildChooser", DefaultBuildChooser.class);
+        Items.XSTREAM.alias("hudson.plugins.git.GitPublisher", GitPublisher.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.CGit", CGit.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.GithubWeb", GithubWeb.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.GitRepositoryBrowser", GitRepositoryBrowser.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.GitWeb", GitWeb.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.RedmineWeb", RedmineWeb.class);
+        Items.XSTREAM.alias("hudson.plugins.git.browser.ViewGitWeb", ViewGitWeb.class);
 
         Run.XSTREAM.registerConverter(new ObjectIdConverter());
         Run.XSTREAM.alias("hudson.plugins.git.util.BuildData", BuildData.class);
