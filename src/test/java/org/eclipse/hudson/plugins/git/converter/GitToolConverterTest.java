@@ -33,7 +33,6 @@ public class GitToolConverterTest extends BaseLegacyConverterTest {
     @Override
     public void setUp() throws URISyntaxException, IOException {
         super.setUp();
-        GitTool.DescriptorImpl.initXSTREAM();
     }
 
     @Override

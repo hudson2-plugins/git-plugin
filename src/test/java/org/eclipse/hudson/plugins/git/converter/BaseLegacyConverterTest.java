@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.hudson.plugins.git.GitSCM;
+import org.eclipse.hudson.plugins.git.PluginImpl;
 import org.junit.Before;
 
 /**
@@ -37,6 +37,10 @@ public abstract class BaseLegacyConverterTest {
     private File sourceConfigFile;
     private File targetConfigFile;
     protected XStream defaultXSTREAM;
+    
+    static{
+        PluginImpl.setXtreamAliasForBackwardCompatibility();
+    }
 
     @Before
     public void setUp() throws URISyntaxException, IOException {
@@ -44,7 +48,6 @@ public abstract class BaseLegacyConverterTest {
         //Create target config file in order to perform marshall operation
         targetConfigFile = new File(sourceConfigFile.getParent(), "target_" + getResourceName());
         FileUtils.copyFile(sourceConfigFile, targetConfigFile);
-        GitSCM.DescriptorImpl.beforeLoad();
         //Empty implementation of xstream without any aliased from git
         defaultXSTREAM = new XStream2();
         defaultXSTREAM.alias("project", FreeStyleProject.class);

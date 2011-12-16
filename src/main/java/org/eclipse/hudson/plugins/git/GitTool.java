@@ -46,7 +46,8 @@ import org.kohsuke.stapler.StaplerRequest;
  * @author Jyrki Puttonen
  */
 public final class GitTool extends ToolInstallation implements NodeSpecific<GitTool>, EnvironmentSpecific<GitTool> {
-    private static final String HUDSON_GIT_TOOL_ALIAS_NAME = "hudson.plugins.git.GitTool";
+   
+    private static final String GIT_TOOL_GLOBAL_CONFIG_FILE = "git-tool-global-config.xml";
 
     @DataBoundConstructor
     public GitTool(String name, String home, List<? extends ToolProperty<?>> properties) {
@@ -110,20 +111,23 @@ public final class GitTool extends ToolInstallation implements NodeSpecific<GitT
     @Extension
     public static class DescriptorImpl extends ToolDescriptor<GitTool> {
 
-        @Override
-        public String getId() {
-            return HUDSON_GIT_TOOL_ALIAS_NAME;
-        }
-
         public DescriptorImpl() {
             super();
-            initXSTREAM();
             load();
         }
-
-        public static void initXSTREAM() {
-            XmlFile.DEFAULT_XSTREAM.alias("hudson.plugins.git.GitTool$DescriptorImpl", DescriptorImpl.class);
-            XmlFile.DEFAULT_XSTREAM.alias("hudson.plugins.git.GitTool", GitTool.class);
+        
+        @Override
+        public XmlFile getConfigFile() {
+            File hudsonRoot = Hudson.getInstance().getRootDir();
+            File globalConfigFile = new File(hudsonRoot, GIT_TOOL_GLOBAL_CONFIG_FILE);
+            
+            // For backward Compatibility
+            File oldGlobalConfigFile = new File(hudsonRoot, "hudson.plugins.git.GitTool.xml");
+            if (oldGlobalConfigFile.exists()){
+                oldGlobalConfigFile.renameTo(globalConfigFile);
+            }
+            
+            return new XmlFile(globalConfigFile);
         }
 
         @Override

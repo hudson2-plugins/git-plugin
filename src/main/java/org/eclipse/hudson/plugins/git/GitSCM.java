@@ -15,8 +15,6 @@
 package org.eclipse.hudson.plugins.git;
 
 import org.eclipse.hudson.plugins.git.browser.GitRepositoryBrowser;
-import org.eclipse.hudson.plugins.git.converter.ObjectIdConverter;
-import org.eclipse.hudson.plugins.git.converter.RemoteConfigConverter;
 import org.eclipse.hudson.plugins.git.opt.PreBuildMergeOptions;
 import org.eclipse.hudson.plugins.git.util.BuildChooser;
 import org.eclipse.hudson.plugins.git.util.BuildChooserDescriptor;
@@ -39,7 +37,6 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.model.Items;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.ParametersAction;
@@ -94,9 +91,8 @@ import static hudson.Util.fixEmptyAndTrim;
  * @author Nigel Magnay
  */
 public class GitSCM extends SCM implements Serializable {
-    private static final String HUDSON_SCM_GITSCM_ALIAS_NAME = "hudson.plugins.git.GitSCM";
-    private static final String HUDSON_SCM_GITSCM_DESCRIPTOR_ALIAS_NAME = HUDSON_SCM_GITSCM_ALIAS_NAME
-        + "$DescriptorImpl";
+    
+    private static final String GIT_SCM_GLOBAL_CONFIG_FILE = "git-scm-global-config.xml";
 
     public static final String GIT_BRANCH = "GIT_BRANCH";
     public static final String GIT_COMMIT = "GIT_COMMIT";
@@ -177,6 +173,7 @@ public class GitSCM extends SCM implements Serializable {
     private String gitConfigEmail;
 
     private boolean skipTag;
+    
 
     public Collection<SubmoduleConfig> getSubmoduleCfg() {
         return submoduleCfg;
@@ -1024,8 +1021,21 @@ public class GitSCM extends SCM implements Serializable {
 
         public DescriptorImpl() {
             super(GitSCM.class, GitRepositoryBrowser.class);
-            beforeLoad();
             load();
+        }
+        
+        @Override
+        public XmlFile getConfigFile() {
+            File hudsonRoot = Hudson.getInstance().getRootDir();
+            File globalConfigFile = new File(hudsonRoot , GIT_SCM_GLOBAL_CONFIG_FILE);
+            
+            // For backward Compatibility
+            File oldGlobalConfigFile = new File(hudsonRoot, "hudson.plugins.git.GitSCM.xml");
+            if (oldGlobalConfigFile.exists()){
+                oldGlobalConfigFile.renameTo(globalConfigFile);
+            }
+            
+            return new XmlFile(globalConfigFile);
         }
 
         public void setGlobalConfigName(String globalConfigName) {
@@ -1038,27 +1048,6 @@ public class GitSCM extends SCM implements Serializable {
 
         public void setCreateAccountBaseOnCommitterEmail(boolean createAccountBaseOnCommitterEmail) {
             this.createAccountBaseOnCommitterEmail = createAccountBaseOnCommitterEmail;
-        }
-
-        /**
-         * Registering legacy converters and aliases for backward compatibility with org.spearce.jgit library
-         */
-        public static void beforeLoad() {
-            Items.XSTREAM.alias("ObjectId", ObjectId.class);
-            Items.XSTREAM.alias("RemoteConfig", RemoteConfig.class);
-            Items.XSTREAM.alias("RemoteConfig", org.spearce.jgit.transport.RemoteConfig.class);
-            Items.XSTREAM.alias("RemoteConfig", GitRepository.class);
-            Items.XSTREAM.registerConverter(
-                new RemoteConfigConverter(Items.XSTREAM.getMapper(), Items.XSTREAM.getReflectionProvider()));
-            Items.XSTREAM.alias("hudson.plugins.git.GitSCM", GitSCM.class);
-            Items.XSTREAM.alias("hudson.plugins.git.BranchSpec", BranchSpec.class);
-            Items.XSTREAM.alias("hudson.plugins.git.util.DefaultBuildChooser", DefaultBuildChooser.class);
-            Run.XSTREAM.registerConverter(new ObjectIdConverter());
-            Run.XSTREAM.alias("hudson.plugins.git.util.BuildData", BuildData.class);
-            Run.XSTREAM.alias("hudson.plugins.git.util.Build", Build.class);
-            Run.XSTREAM.alias("hudson.plugins.git.Branch", Branch.class);
-            Run.XSTREAM.alias("hudson.plugins.git.GitChangeLogParser", GitChangeLogParser.class);
-            XmlFile.DEFAULT_XSTREAM.alias(HUDSON_SCM_GITSCM_DESCRIPTOR_ALIAS_NAME, DescriptorImpl.class);
         }
 
         public String getDisplayName() {
