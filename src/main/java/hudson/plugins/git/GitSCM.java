@@ -1462,18 +1462,16 @@ public class GitSCM extends SCM implements Serializable {
         }
     }
 
-    private boolean changeLogResult(String changeLog, File changelogFile) throws IOException {
-        if (changeLog == null) {
-            return false;
-        } else {
-            changelogFile.delete();
+    private boolean changeLogResult(String changeLog, File changeLogFile) throws IOException {
+        changeLogFile.delete();
 
-            FileOutputStream fos = new FileOutputStream(changelogFile);
+        if (changeLog != null) {
+            FileOutputStream fos = new FileOutputStream(changeLogFile);
             fos.write(changeLog.getBytes());
             fos.close();
-            // Write to file
-            return true;
         }
+
+        return true;
     }
 
     private Pattern[] getExcludedRegionsPatterns() {
