@@ -619,7 +619,7 @@ public class GitSCM extends SCM implements Serializable {
             }
 
             List<RemoteConfig> repos = entry.getValue();
-            final Revision revToBuild = gerRevisionToBuild(listener, workingDirectory, gitExe, buildData, environment,
+            final Revision revToBuild = getRevisionToBuild(listener, workingDirectory, gitExe, buildData, environment,
                 singleBranch, repos,
                 parentLastBuiltRev, rpa);
 
@@ -646,7 +646,6 @@ public class GitSCM extends SCM implements Serializable {
             // No merge
             buildConfig = getBuildConfig(listener, workingDirectory, buildNumber, gitExe, buildData, environment,
                 paramLocalBranch, repos, revToBuild, internalTagName, internalTagComment);
-
 
             build.addAction(buildConfig.getBuildData());
 
@@ -838,7 +837,7 @@ public class GitSCM extends SCM implements Serializable {
         });
     }
 
-    private Revision gerRevisionToBuild(final BuildListener listener, FilePath workingDirectory, final String gitExe,
+    private Revision getRevisionToBuild(final BuildListener listener, FilePath workingDirectory, final String gitExe,
                                         final BuildData buildData, final EnvVars environment, final String singleBranch,
                                         final List<RemoteConfig> paramRepos, final Revision parentLastBuiltRev,
                                         final RevisionParameterAction rpa) throws IOException, InterruptedException {
